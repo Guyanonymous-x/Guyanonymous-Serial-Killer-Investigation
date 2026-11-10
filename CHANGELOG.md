@@ -1,5 +1,42 @@
 # Changelog
 
+## V2 (10 November 2026)
+
+**Play either side**
+- **Killer mode:** you play the killer and the computer runs the police. Pick from 3 people, take a random one, or build your own. You have time-based days, watch places and people, plan nights with a care level, and choose signatures, keepsakes and hiding places. The urge rises daily and is settled more by acts that fit your pattern. Permanent choices: destroying evidence, writing to the newspaper, confiding in someone. You see only clinical news reports and signs that the police are close. The score is based on days free, quiet days, consistency and risky choices, with no points per victim. Easy, Normal and Hard computer police.
+- **Two-player mode** on one computer, with a hand-over screen between turns.
+
+**Setting up a case**
+- Population from a village of 100 to a city of 10,000. Districts, places, jobs and police force scale with it.
+- Difficulty: Easy, Normal or Hard.
+- A tutorial case with step-by-step tips.
+- Save / Load: 3 browser slots, plus save files.
+
+**Your department**
+- The police force grows with the population (about 1 detective per 500 people). Villages get help from county forensics, and their scenes stay fresh longer.
+- Squads and standing orders ("★ Newest case").
+- A career roster: detectives carry over between cases, improve with use, and can burn out or retire.
+- Fatigue, a budget, a profiler, temporary officers, and paying to rush lab results.
+
+**Investigation**
+- Lab delays for blood and samples.
+- Witnesses can be wrong; every report shows its confidence.
+- Victims' friends, family and coworkers can be interviewed. Phone records.
+- Background checks: hometowns, earlier names, old records, and people from the same town.
+- Old incident reports, including the killer's earlier acts.
+- The killer's origin story, and people from the killer's past who live in the city.
+- Households that grow suspicious, cover up, contradict alibis or call the tip line.
+- Hiding places: home, garage, car, work locker, storage unit (found through finances), or buried outside.
+
+**The press and the city**
+- Choose what to release at press conferences. Releasing the signature makes copycats possible.
+- The press gives the killer a nickname.
+- Frightened districts: fewer people out at night, more witnesses.
+- Neighbourhood patrols.
+
+**Screens**
+- A Timeline tab, notes on cases and people (also shown on the evidence wall), the map in killer mode, and a layout for phones and tablets.
+
 ## V1 (9 November 2026)
 
 First playable prototype.
