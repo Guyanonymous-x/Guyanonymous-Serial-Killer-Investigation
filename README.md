@@ -13,11 +13,13 @@ The victims are people too. Their lives are the main clue: where they spent thei
 3. Use the **Case files**, **City map** and **Evidence wall** tabs to work out who the killer is.
 4. Charge your suspect when the case is strong enough. A court decides.
 
-Press **How to play** in the game for the full rules. New players can start with the **tutorial case** on the new-case screen. Every rule and number is listed in [docs/DESIGN_V2.md](docs/DESIGN_V2.md) (V2 changes and additions) and [docs/DESIGN.md](docs/DESIGN.md) (the V1 base rules).
+Press **How to play** in the game for the full rules. New players can start with the **tutorial case** on the new-case screen. Every rule and number is listed in [docs/DESIGN.md](docs/DESIGN.md) (V1 base rules), [docs/DESIGN_V2.md](docs/DESIGN_V2.md) (V2) and [docs/DESIGN_V3.md](docs/DESIGN_V3.md) (V3).
+
+On a desktop, every area is a panel you can move, resize, collapse and close; use **Panels ▾** and **Layouts…** at the top.
 
 ## Status
 
-Version 2. See [CHANGELOG.md](CHANGELOG.md).
+Version 3. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Files
 
@@ -28,4 +30,6 @@ Version 2. See [CHANGELOG.md](CHANGELOG.md).
 | `docs/DESIGN.md` | The V1 base rules and numbers |
 | `docs/DESIGN_V2.md` | V2 rules and numbers (changes and additions) |
 | `docs/V2_DESIGN_KILLER_MODE.md` | The V2 plan and your decisions |
+| `docs/DESIGN_V3.md` | V3 rules and numbers |
+| `docs/V3_PLAN.md` | The V3 plan and your decisions |
 | `docs/ORIGINAL_IDEA.md` | The original idea and the design decisions made so far |

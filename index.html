@@ -33,7 +33,7 @@ main{display:grid;grid-template-columns:330px 1fr 360px;gap:14px;padding:14px;al
 @media(max-width:760px){main{grid-template-columns:1fr;padding:8px;gap:10px}
   header{padding:8px 10px;gap:10px}header h1{font-size:17px!important}.bar{width:110px}.stat b{font-size:15px}
   header .spacer{display:none}header button{padding:4px 8px;font-size:12px}
-  .tabs{overflow-x:auto;flex-wrap:nowrap}.tabs button{white-space:nowrap;font-size:13px}
+  .tabs{overflow-x:auto;flex-wrap:nowrap}.tabs button{white-space:nowrap;font-size:13px;flex:0 0 auto}
   #modal{padding:10px 6px}#modal .box{padding:12px}.filters{grid-template-columns:1fr}
   select,input,button{font-size:15px}.det select{font-size:14px}.card{padding:10px}}
 .card{background:var(--paper);color:var(--ink);border-radius:6px;padding:12px 14px;margin-bottom:14px;box-shadow:0 3px 10px #0006}
@@ -100,16 +100,38 @@ a.pl.ispoi::before{content:"\1F4CC";font-size:10px;margin-right:2px}
 .wc.K .t{color:#d9a}
 .wc.dim{opacity:.28}.wc.foc{outline:3px solid #ffd54a}
 .wc a.pl{font-size:13px}
+#kUI select{max-width:100%}
+#kUI .card{overflow-wrap:anywhere;min-width:0}
+#kUI>div{min-width:0}
+main.ws{display:block;position:relative;margin:10px 15px;padding:0}
+.pnl{position:absolute;background:var(--paper);color:var(--ink);border-radius:6px;box-shadow:0 3px 12px #0008;display:flex;flex-direction:column;overflow:hidden;min-width:120px}
+.pnl-h{flex:0 0 auto;display:flex;justify-content:space-between;align-items:center;background:#2a2622;color:#f3ecdc;padding:4px 6px 4px 10px;cursor:move;user-select:none;touch-action:none;font-family:"Special Elite",monospace;font-size:14px}
+.pnl-h .pb{background:transparent;color:#f3ecdc;border:none;padding:0 6px;font-size:13px;cursor:pointer}
+.pnl-h .pb:hover{color:#ffd54a}
+.pnl-b{flex:1 1 auto;overflow:auto}
+.pnl.collapsed .pnl-b,.pnl.collapsed .pnl-r{display:none}
+.pnl-r{position:absolute;right:0;bottom:0;width:16px;height:16px;cursor:nwse-resize;touch-action:none;background:linear-gradient(135deg,transparent 50%,#8a7a60 50%,#8a7a60 60%,transparent 60%,transparent 70%,#8a7a60 70%,#8a7a60 80%,transparent 80%)}
+.pnl-b .card{margin:0;box-shadow:none;border-radius:0}
+.pnl-b>.card{min-height:100%}
+.pnl-b>.card>h2:first-child,.pnl-b>#mapHome>.card>h2:first-child,.pnl-b #kMapSlot>.card>h2:first-child{display:none}
+.pnl-b .log,.pnl-b .wallScroll{max-height:none}
+.pnl-b #cases>.card{margin-bottom:8px}
+#pMenu{position:absolute;z-index:60;background:var(--paper);color:var(--ink);border-radius:6px;padding:10px 12px;box-shadow:0 6px 20px #000a;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.pmOnly{display:none}
+body.pm .pmOnly{display:inline-block}
+body.pm #tabs{display:none}
 </style>
 </head>
 <body>
 <header>
-  <div><h1>Guyanonymous' Serial Killer Investigation</h1><div class="sub">V2 · <span id="cfgInfo"></span> · case seed <span id="seed"></span></div></div>
+  <div><h1>Guyanonymous' Serial Killer Investigation</h1><div class="sub">V3 · <span id="cfgInfo"></span> · case seed <span id="seed"></span></div></div>
   <div class="stat">Day<b id="dayN">1</b></div>
   <div class="stat">Weekday<b id="dayW">Mon</b></div>
   <div class="stat">Victims<b id="vicN">0</b></div>
   <div class="stat">Public pressure <span id="presN"></span><div class="bar"><i id="presBar"></i></div></div>
   <div class="spacer"></div>
+  <button id="btnPanels" class="pmOnly">Panels ▾</button>
+  <button id="btnLayouts" class="pmOnly">Layouts…</button>
   <button id="btnSave">Save / Load</button>
   <button id="btnHelp">How to play</button>
   <button id="btnNew">New case</button>
@@ -263,7 +285,8 @@ const PLD=[
  ["Riverside Recycling","Riverside","industrial",0,[["Sorter","day",6],["Sorter","night",3]]],
  ["Harbor Ferry Terminal","Harbor","transport",0,[["Deckhand","day",4],["Deckhand","night",2]]],
  ["Hillcrest University","Hillcrest","school",0,[["Lecturer","day",8],["Cleaner","night",3]]],
- ["City Courier Hub","Market","transport",0,[["Courier","day",6],["Courier","night",3]]]
+ ["City Courier Hub","Market","transport",0,[["Courier","day",6],["Courier","night",3]]],
+ ["Central Police Station","Old Town","office",0,[["Police officer","day",4],["Police officer","night",2]]]
 ];
 const TOKENS=['a folded paper crane','a single white chess pawn','a pressed violet','an old brass key','a tarot card (The Moon)','a blue glass marble'];
 const METHODS=['ligature strangulation (a thin cord)','a single stab wound','blunt force to the head'];
@@ -307,6 +330,9 @@ const ACTIONS={
  circle:{label:"Interview victim's friends, family & coworkers",t:'case',sk:'p'},
  phone:{label:"Request victim's phone records (2 days)",t:'case',sk:'p'},
  cold:{label:'Pull old incident reports near a place',t:'place',sk:'p'},
+ screen:{label:'Blood screening drive in a map area',t:'area',sk:'p'},
+ purch:{label:'Check shop records for the means used',t:'case',sk:'p'},
+ card:{label:"Trace use of the victim's bank cards",t:'case',sk:'p'},
  background:{label:'Background check on a person',t:'person',sk:'p'},
  household:{label:"Interview a person's household",t:'person',sk:'p'},
  finance:{label:"Check a person's finances",t:'person',sk:'p'},
@@ -370,6 +396,7 @@ function genPlaces(pop){
       list.push({name,district:pick(DISTRICTS),kind:g[0],hang:!!g[1],jobs:g[2]});
     }
   }
+  if(!list.some(x=>x.name==='Central Police Station'))list.push(base.find(x=>x.name==='Central Police Station'));
   for(const x of list)if(!DLAY[x.district])x.district=pick(DISTRICTS);
   PL=list.map((x,i)=>({id:i,...x}));
   const hangStaff=PL.filter(p=>p.hang).reduce((a,p)=>a+p.jobs.reduce((b,j)=>b+j[2],0),0);
@@ -573,6 +600,7 @@ function doAction(i,det){
   det.fat=(det.fat||0)+1;
   if(as.t===''||as.t==null){addLog(`${nm} had no target and did paperwork.`);return}
   const lvl=effSkill(det,A.sk||'p'),ch=sk(lvl);
+  if(EXTRA[as.a]){EXTRA[as.a](as,det,ch,lvl);return}
   const K=S.k,k=P[K.id];
   const fearM=1+Math.min(.3,(S.fear[k.district]||0)*.05);
   if(A.t==='case'){
@@ -593,7 +621,7 @@ function doAction(i,det){
     }else if(as.a==='autopsy'){
       if(c.autopsy){addLog(`${nm} went to the morgue, but case #${c.id}'s autopsy was already done.`);return}
       c.autopsy=true;gain(det,'f');
-      let t=`${nm} attended the autopsy for case #${c.id}: cause of death ${c.copy!=null?pick(METHODS.filter(m=>m!==K.method)):K.method}; died around ${c.time} on ${DAYSL[wd(c.day)]} night.`;
+      let t=`${nm} attended the autopsy for case #${c.id}: cause of death ${c.methodLabel||(c.copy!=null?pick(METHODS.filter(m=>m!==K.method)):K.method)}; died around ${c.time} on ${DAYSL[wd(c.day)]} night.`;
       if(c.tr.height&&chance(ch+.1)){
         const hi=src.height+ri(2,5),lo=src.height-4-ri(0,2);
         c.found.height=1;c.vals.height=[lo,hi];t+=` Wound angle suggests an attacker <b>${lo}–${hi} cm</b> tall.`;
@@ -635,7 +663,8 @@ function doAction(i,det){
         const h=p.hangouts.find(x=>x.pid===pl.id);
         if(h){rows.push({id:p.id,role:'Regular',days:h.days});pk(p.id).places[pl.id]=[...new Set([...(pk(p.id).places[pl.id]||[]),...h.days])].sort()}
       }
-      S.placesPulled[pl.id]=rows;
+      for(const r of ((S.seenRec||{})[pl.id]||[])){rows.push({id:r.id,role:`Seen there (${r.how})`,days:[r.w]});pk(r.id).places[pl.id]=[...new Set([...(pk(r.id).places[pl.id]||[]),r.w])].sort()}
+      S.placesPulled[pl.id]=rows;if(S.pullDay)S.pullDay[pl.id]=S.day;
       addLog(`${nm} pulled staff rotas and loyalty-card records for <b>${pl.name}</b>: ${rows.length} names. <a class="pl" data-place="${pl.id}">Open list</a>`);
     }else if(as.a==='stakeout'){
       S.stakeouts.push({pid:pl.id,s:lvl,det:nm,i,d:det});
@@ -652,9 +681,9 @@ function doAction(i,det){
     if(as.a==='interview'){
       const first=!K2.interviewed;K2.interviewed=true;K2.hair=p.hair;
       if(K2.shoe==null&&chance(ch))K2.shoe=p.shoe;
-      if(first)K2.demeanour=isK?(chance(.3+.2*lvl)?'evasive':'calm'):(chance(.12)?'nervous':'calm');
+      if(first)K2.demeanour=isK?(chance((.3+.2*lvl)*(KM()?.5:1))?'evasive':'calm'):(chance(.12)?'nervous':'calm');
       let claimed=p.hangouts.slice();
-      if(isK)claimed=[];
+      if(isK&&!(KM()&&S.kp.stance==='honest'))claimed=[];
       K2.claimed=claimed.map(h=>h.pid);
       for(const h of claimed)K2.places[h.pid]=[...new Set([...(K2.places[h.pid]||[]),...h.days])].sort();
       if(isK){K.heat+=30;if(K.house)K.house.susp+=10}
@@ -677,7 +706,8 @@ function doAction(i,det){
       addLog(`${nm} checked alibis for ${plink(p.id)}: ${out.length?out.join(', '):'nothing new to check'}.`);
     }else if(as.a==='sample'){
       if(K2.blood||K2.sampleReq){addLog(`${plink(p.id)}'s blood sample is already done or at the lab.`);return}
-      if(isK){K2.refused=true;K.heat+=15;addLog(`${plink(p.id)} <b>refused</b> to give a blood sample.`)}
+      if(isK&&!(KM()&&S.kp.sampleChoice==='comply')){K2.refused=true;K.heat+=15;addLog(`${plink(p.id)} <b>refused</b> to give a blood sample.`)}
+      else if(isK){K2.sampleReq=true;labQueue({type:'sample',pid:p.id,val:p.blood});addLog(`${plink(p.id)} agreed to a blood sample. Sent to the lab.`)}
       else if(chance(.85)){K2.sampleReq=true;labQueue({type:'sample',pid:p.id,val:p.blood});gain(det,'p');addLog(`${plink(p.id)} agreed to a blood sample. Sent to the lab.`)}
       else{K2.refused=true;addLog(`${plink(p.id)} refused a blood sample ("I know my rights").`)}
     }else if(as.a==='background'){
@@ -733,6 +763,13 @@ function evidence(id){
   if(k.fibres)items.push(["Fibres from a victim's clothing in their car",2]);
   if(k.houseTold)items.push(['Household member describes late nights and hidden items',3]);
   if(k.priorSimilar)items.push(['Old record of similar behaviour',1]);
+  if(k.refusedScreen)items.push(['Refused a blood screening',1]);
+  if(k.bought)items.push([`Bought ${k.bought.map(x=>MEANS[x].label.toLowerCase()).join(', ')} shortly before a killing`,1]);
+  if(k.pawned)items.push(["Sold a victim's property",3]);
+  if(k.weapon)items.push(["An object at home matches the victims' wounds",3]);
+  if(k.clothes)items.push(['Clothing with traces from a victim',2]);
+  if(k.tamper)items.push(['Internal affairs: evidence tampering',3]);
+  if(k.tipped)items.push(['Named in an anonymous tip',0]);
   const al=Object.entries(k.alibi);
   if(al.some(([,a])=>a.st==='contradicted'))items.push(['Alibi contradicted',2]);
   for(const[cid,a]of al)if(a.st==='confirmed')ex.push(`Solid alibi for case #${cid}`);
@@ -752,12 +789,13 @@ function evidence(id){
 }
 function arrest(id){
   const p=P[id],e=evidence(id),guilty=id===S.k.id;
-  const conv=e.score>=7&&!e.ex.length;
+  const hard=e.items.some(([t])=>/Blood type|signature|belongings|wounds|Clothing with traces|Sold a victim|Phoned|Fibres|Household member|Caught/.test(t)&&!/witnesses/.test(t));
+  const conv=e.score>=7&&!e.ex.length&&(!KM()||hard);
   closeModal();
   if(guilty&&conv){addLog(`<b>${plink(id)} is convicted.</b>`,true);if(KM()){endGameK('conv','The police built their case, and the jury convicted you.');return}endGame('win',`You arrested ${fullName(p)} and the jury convicted on the evidence.`);return}
   if(!conv)S.failedCharges=(S.failedCharges||0)+1;
   if(guilty&&!conv){
-    S.pressure+=20;S.k.heat=100;S.k.next=Math.max(S.k.next,S.day+4);S.k.active=1-S.k.active;
+    S.pressure+=20;S.k.heat=100;S.k.next=Math.max(S.k.next,S.day+4);if(S.k.grounds.length>1)S.k.active=1-S.k.active;
     addLog(`<b>Court: ${plink(id)} is acquitted.</b> The jury wasn't convinced (strength ${e.score}${e.ex.length?', with evidence pointing away':''}; a conviction needs 7+). The press is furious.`,true);
   }else if(!guilty&&conv){
     p.jailed=true;S.wrongful=id;S.pressure=Math.max(5,S.pressure-40);
@@ -823,7 +861,7 @@ function endDay(){
     }
   }
   const linked=S.cases.filter(c=>c.copy==null&&c.foundDay<=S.day).length;
-  if(!S.nick&&linked>=2){const ds=[...new Set(S.cases.filter(c=>c.copy==null&&c.foundDay<=S.day).map(c=>districtAt(c.x,c.y)))];S.nick=`The ${ds.length===1&&DISTRICTS.length>1?ds[0]+' ':''}${NICK[S.k.token]||'Night'} Killer`;if(S.k.house)S.k.house.susp+=8;addLog(`<b>The Daily Ledger</b> runs the headline: <b>"${S.nick}"</b>. The name sticks.`,true);news(`<b>The Daily Ledger</b> has a name for you: <b>"${S.nick}"</b>.`,true)}
+  if(!S.nick&&linked>=2){const ds=[...new Set(S.cases.filter(c=>c.copy==null&&c.foundDay<=S.day).map(c=>districtAt(c.x,c.y)))];S.nick=(KM()&&!S.kp.sig)?`The ${ds.length===1&&DISTRICTS.length>1?ds[0]:'Night'} Killer`:`The ${ds.length===1&&DISTRICTS.length>1?ds[0]+' ':''}${NICK[S.k.token]||'Night'} Killer`;if(S.k.house)S.k.house.susp+=8;addLog(`<b>The Daily Ledger</b> runs the headline: <b>"${S.nick}"</b>. The name sticks.`,true);news(`<b>The Daily Ledger</b> has a name for you: <b>"${S.nick}"</b>.`,true)}
   if(!S.vig&&(linked>=3)){S.vig=true;addLog(`Residents have formed neighbourhood patrols. They may help, or get in the way.`,true);news('Residents have formed neighbourhood patrols.',true)}
   for(const[t,msg]of[[50,'The Mayor\'s office calls: "Results, and soon."'],[75,'Editorial in The Daily Ledger: "Does our police department have any idea what it\'s doing?"'],[90,'The Chief warns you: one more bad day and you\'re off the case.']])
     if(S.pressure>=t&&!S.warned[t]){S.warned[t]=1;addLog(`<i>${msg}</i>`,true)}
@@ -912,7 +950,7 @@ function circleInterview(c,det,ch){
     else if(c.copy==null&&c.tr.friend&&!c.found.friend&&r<.75&&chance(ch)){
       c.found.friend=1;const rr=wit('sex',k.sex,`Case #${c.id}, ${who.rel}`,.9,c);
       const dec=Math.floor(k.age/10)*10;knowAge(dec-3,dec+12,`Case #${c.id}, ${who.rel}`);
-      st=`${v.first} had mentioned a <b>${rr.v==='F'?'woman':'man'}</b>, maybe in their ${dec}s, at ${PL[K.grounds[K.active].pid].name} who was "a bit too friendly".`;
+      st=`${v.first} had mentioned a <b>${rr.v==='F'?'woman':'man'}</b>, maybe in their ${dec}s, at ${PL[(K.grounds[K.active]||K.grounds[0]).pid].name} who was "a bit too friendly".`;
     }else if(r<.55){const x=pick(P.filter(q=>q.alive&&q.id!==v.id));st=`${v.first} had argued with ${plink(x.id)} recently, about money.`}
     else st=pick([`${v.first} had been planning a trip.`,`${v.first} had seemed happier lately.`,`${v.first} kept to a routine; nothing seemed wrong.`,`${v.first} was worried about work.`]);
     out.push(`${plink(p.id)} (${who.rel}): ${st}`);
@@ -924,7 +962,7 @@ function phoneResult(c){
   const v=P[c.vid],K=S.k,k=P[K.id],t=[];
   if(c.copy==null&&c.kcontact){pk(K.id).phoned=(pk(K.id).phoned||[]).concat(c.id);t.push(`three short calls in the week before ${his(v)} death from a number registered to <b>${plink(K.id)}</b>`)}
   if(c.lastSeen!=null&&!c.lastSeenKnown&&chance(.6)){c.lastSeenKnown=true;t.push(`messages about meeting friends at <b>${PL[c.lastSeen].name}</b> that night`)}
-  if(c.copy==null&&k.car&&chance(.4)){const r=wit('car',k.car,`Case #${c.id} messages`,.8,c);t.push(`a message to a friend about "that ${k.sex==='F'?'woman':'guy'} with the ${r.v} car" at ${PL[K.grounds[K.active].pid].name}`)}
+  if(c.copy==null&&k.car&&chance(.4)){const r=wit('car',k.car,`Case #${c.id} messages`,.8,c);t.push(`a message to a friend about "that ${k.sex==='F'?'woman':'guy'} with the ${r.v} car" at ${PL[(K.grounds[K.active]||K.grounds[0]).pid].name}`)}
   if(!t.length)t.push('nothing unusual: calls with family, friends and work');
   addLog(`Phone records for case #${c.id} (${plink(v.id)}): ${t.join('; ')}.`);
 }
@@ -982,7 +1020,8 @@ function doSearch(kind,p,det,ch){
   if(kind==='locker'&&p.place==null){addLog(`${plink(p.id)} has no workplace locker.`);return}
   if(kind==='storage'&&!K2.storage){addLog(`No storage unit is known for ${plink(p.id)}. Check their finances first.`);return}
   const e=evidence(p.id);
-  if(e.score<3||e.ex.length){addLog(`The judge refused a warrant to search ${plink(p.id)}'s ${what}: ${e.ex.length?'evidence points away from them':'not enough grounds'} (strength ${e.score}; needs 3+ with nothing clearing them).`);return}
+  const need=KM()&&isK?(S.kp.wealth===4?4:pk(p.id).tamper?2:3):3;
+  if(e.score<need||e.ex.length){addLog(`The judge refused a warrant to search ${plink(p.id)}'s ${what}: ${e.ex.length?'evidence points away from them':'not enough grounds'} (strength ${e.score}; needs ${need}+ with nothing clearing them).`);return}
   (K2.searchedAt=K2.searchedAt||[]).push(kind);
   if(kind==='warrant'){K2.searched=true;if(!K2.blood){K2.blood=p.blood}}
   if(isK){
@@ -994,9 +1033,12 @@ function doSearch(kind,p,det,ch){
       addLog(`<b>${nm} searched ${plink(p.id)}'s ${what}.</b> Found: ${K2.token?K.token.replace(/^a |^an /,'a box of '):'nothing of the signature'}${K2.trophies.length?`, and ${K2.trophies.map(id=>{const c=S.cases.find(x=>x.id==id);return `${P[c.vid].first} ${P[c.vid].last}'s ${c.trophy}`}).join(', ')}`:''}.`,true);
     }else if(kind==='vehicle'&&!K2.fibres&&chance(.6)){K2.fibres=true;gain(det,'f');addLog(`<b>${nm} searched ${plink(p.id)}'s car</b>: nothing hidden, but fibres in the boot match clothing from a victim.`,true)}
     else addLog(`${nm} searched ${plink(p.id)}'s ${what}. Nothing found.${kind==='warrant'?` Blood type taken: ${p.blood}.`:''}`);
+    if(KM()&&hit){if(Object.values(S.kp.means).some(m=>m.bloody)&&!K2.weapon){K2.weapon=true;addLog(`Also found: an object with traces matching the victims' wounds.`,true)}if(S.kp.bags.length&&!K2.clothes){K2.clothes=true;addLog(`Also found: clothing with traces from a victim.`,true)}}
   }else{
-    S.pressure+=5;
-    addLog(`${nm} searched ${plink(p.id)}'s ${what}. Nothing connected to the case.${kind==='warrant'?` Blood type taken: ${p.blood}.`:''} A complaint has been filed.`);
+    const pl=(K2.planted||[]).filter(x=>({warrant:'home',vehicle:'car'})[kind]===x.spot);
+    if(pl.length){for(const x of pl)if(!K2.trophies.includes(x.cid))K2.trophies.push(x.cid);addLog(`<b>${nm} searched ${plink(p.id)}'s ${what}</b> and found ${pl.map(x=>x.desc).join(', ')}.`,true)}
+    else{S.pressure+=5;
+    addLog(`${nm} searched ${plink(p.id)}'s ${what}. Nothing connected to the case.${kind==='warrant'?` Blood type taken: ${p.blood}.`:''} A complaint has been filed.`);}
   }
 }
 /* ---- cold-case files ---- */
@@ -1164,10 +1206,10 @@ const AIP=()=>S&&S.cfg&&S.cfg.mode==='killer';
 const TWO=()=>S&&S.cfg&&S.cfg.mode==='two';
 function news(html,big){if(S.kp)S.kp.news.push({day:S.day,html,big:!!big})}
 function sign(txt){if(KM()){S.kp.signs.push({day:S.day,txt});S.kp.lastSign=S.day}}
-function initKillerMode(){
+function initKillerMode0(){
   S.kp={hours:0,urge:20,acts:[],known:{},scouted:{},observed:{},seenAt:{},sig:null,sigChanged:false,keep:false,press:false,confided:null,moved:false,alibiTonight:null,plan:null,signs:[],news:[],low:0,daysFree:0,forcedMsg:false,chosen:false,tab:'today'};
 }
-function freeHours(d){
+function freeHours0(d){
   const k=P[S.k.id],w=wd(d);
   if(!k.workdays.includes(w)||!k.shift)return 12;
   if(k.shift==='evening')return 4;
@@ -1175,7 +1217,7 @@ function freeHours(d){
   return 6;
 }
 function nightFree(d){const k=P[S.k.id];return !(k.shift==='night'&&k.workdays.includes(wd(d)))}
-function setPlayerKiller(id){
+function setPlayerKiller0(id){
   const k=P[id];S.k.id=id;
   if(!k.car&&false)k.car=null;
   if(k.home==='here')k.home=pick(TOWNS);
@@ -1198,7 +1240,7 @@ function setPlayerKiller(id){
 function candidates3(){return shuffle(P.filter(p=>p.alive&&p.age>=25&&p.age<=58&&p.shift!=='evening')).slice(0,3)}
 function chooseKillerModal(){
   const c=candidates3();UI.cands=c.map(p=>p.id);
-  const card=p=>`<div class="det"><b>${fullName(p)}</b>, ${p.age}, ${p.sex==='F'?'female':'male'}<br>${p.job}${p.place!=null?' at '+PL[p.place].name+` (${p.shift} shifts)`:''}<br>${p.household}. Lives in ${p.district}. ${p.car?p.car+' car':'No car'}.<br><span class="muted">Evenings: ${p.hangouts.map(h=>`${PL[h.pid].name} (${dayList(h.days)})`).join(', ')||'mostly at home'}</span><br><button class="small" data-pickk="${p.id}">Play as ${p.first}</button></div>`;
+  const card=p=>`<div class="det"><b>${fullName(p)}</b>, ${p.age}, ${p.sex==='F'?'female':'male'}<br>${p.job}${p.place!=null?' at '+PL[p.place].name+` (${p.shift} shifts)`:''}<br>${p.household}. Lives in ${p.district}. ${p.car?p.car+' car':'No car'}. Wealth: ${WEALTH[wealthOf(p)]}.<br><span class="muted">Evenings: ${p.hangouts.map(h=>`${PL[h.pid].name} (${dayList(h.days)})`).join(', ')||'mostly at home'}</span><br><button class="small" data-pickk="${p.id}">Play as ${p.first}</button></div>`;
   const jobs=[];PL.forEach(pl=>pl.jobs.forEach(j=>{if(j[1]!=='evening')jobs.push(`${pl.id}|${j[0]}|${j[1]}`)}));
   const hangs=PL.filter(x=>x.hang);
   openModal(`<h2>Who are you?</h2><p class="muted">Each choice changes your free time, your alibis and what the police can find. This choice is permanent.</p>
@@ -1210,6 +1252,7 @@ function chooseKillerModal(){
    <label>Age<input id="bAge" type="number" min="25" max="60" value="35"></label>
    <label style="grid-column:1/-1">Job<select id="bJob"><option value="">No job</option>${jobs.map(j=>{const[a,b,cc]=j.split('|');return `<option value="${j}">${b} at ${PL[a].name} (${cc})</option>`}).join('')}</select></label>
    <label>Household<select id="bHouse"><option>Lives alone</option><option>Lives with partner</option><option>Shares a house with roommates</option><option>Lives with partner and two children</option></select></label>
+   <label>Wealth<select id="bW">${WEALTH.map((w,i)=>`<option value="${i}" ${i===2?'selected':''}>${w}</option>`).join('')}</select></label>
    <label>Car<select id="bCar"><option value="">No car</option>${CARS.map(x=>`<option>${x[0]}</option>`).join('')}</select></label>
    <label>Evening place 1<select id="bH1">${hangs.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')}</select></label>
    <label>Evening place 2<select id="bH2"><option value="">none</option>${hangs.map(h=>`<option value="${h.id}">${h.name}</option>`).join('')}</select></label>
@@ -1224,7 +1267,7 @@ function chooseKillerModal(){
     p.household=$('bHouse').value;p.livesAlone=p.household==='Lives alone';p.car=$('bCar').value||null;
     const free=freeEvenings(p);p.hangouts=[{pid:+$('bH1').value,days:shuffle(free.slice()).slice(0,2).sort()}];
     if($('bH2').value&&$('bH2').value!==$('bH1').value)p.hangouts.push({pid:+$('bH2').value,days:shuffle(free.slice()).slice(0,2).sort()});
-    setPlayerKiller(p.id);closeModal();render()};
+    setPlayerKiller(p.id,+$('bW').value);closeModal();render()};
 }
 /* ---- pattern & urge ---- */
 function vAttrs(v,placeKind){return{sex:v.sex,age:Math.floor(v.age/10)*10,hair:v.hair,alone:v.livesAlone,kind:placeKind||'home'}}
@@ -1241,14 +1284,14 @@ function scoreNow(){const k=S.kp;const base=k.daysFree*10+k.low*5;return Math.ro
 /* ---- daytime actions ---- */
 function kSpend(h){if(S.kp.hours<h){kMsg(`Not enough free time today (needs ${h}h).`);return false}S.kp.hours-=h;return true}
 function kMsg(t){UI.kmsg=t;render()}
-function kScout(pid){
+function kScout0(pid){
   if(!kSpend(3))return;const pl=PL[pid];S.kp.scouted[pid]=true;S.kp.seenAt[pid]=(S.kp.seenAt[pid]||0)+1;
   const k=P[S.k.id];
   if(S.kp.seenAt[pid]>=2&&!k.hangouts.some(h=>h.pid===pid))k.hangouts.push({pid,days:[wd(S.day)]});
   let n=0;for(const p of P){if(!p.alive||p.id===k.id)continue;if(p.place===pid||p.hangouts.some(h=>h.pid===pid)){S.kp.known[p.id]=true;n++}}
   kMsg(`You spent the evening at ${pl.name}, watching. You now recognise ${n} regulars and staff, and know their nights there.${S.kp.seenAt[pid]>=2?' Staff are starting to recognise you too.':''}`);
 }
-function kObserve(id){
+function kObserve0(id){
   if(!kSpend(2))return;const p=P[id];S.kp.observed[id]=true;S.kp.known[id]=true;
   if(chance(.12)){S.k.heat+=5;(S.cold=S.cold||[]).push({id:S.cold.length+1,x:p.hx,y:p.hy,day:S.day,k:true,type:'Report of someone watching a house',desc:`${P[S.k.id].sex==='F'?'woman':'man'}, seen near ${fullName(p)}'s home`,rep:p.id});kMsg(`You watched ${fullName(p)}. ${He(p)} ${p.livesAlone?'lives alone':'does not live alone'}. <b>A neighbour noticed you and stared.</b>`)}
   else kMsg(`You watched ${fullName(p)} for a while. ${He(p)} ${p.livesAlone?'lives alone':'does not live alone'}; evenings: ${p.hangouts.map(h=>`${PL[h.pid].name} (${dayList(h.days)})`).join(', ')||'mostly at home'}.`);
@@ -1260,13 +1303,13 @@ function kDestroy(){if(!kSpend(3))return;for(const c of S.cases)c.trophyGone=tru
 function kPress(){if(S.kp.press)return;if(!kSpend(2))return;S.kp.press=true;S.pressure+=10;news('<b>The Daily Ledger</b> received a letter claiming to be from the killer. Police are examining it.',true);
   addLog(`<b>A letter arrived at The Daily Ledger</b>, claiming to be from the killer. Postmarked in ${P[S.k.id].district}; handwritten.`,true);S.kp.letterDistrict=P[S.k.id].district;kMsg('You sent a letter to the newspaper. It cannot be taken back.')}
 function kConfide(id){if(S.kp.confided!=null)return;if(!kSpend(1))return;S.kp.confided=id;kMsg(`You told ${fullName(P[id])}. They know now, permanently.`)}
-function kPlan(o){
+function kPlan0(o){
   const need=4+(o.care==='high'?2:0);if(S.kp.hours<need){kMsg(`Not enough free time tonight (needs ${need}h).`);return}
   if(!nightFree(S.day)){kMsg('You work tonight.');return}
   S.kp.hours-=need;S.kp.plan=o;kMsg(`Planned for tonight: ${fullName(P[o.target])}, ${o.place==='home'?'at their home':'at '+PL[o.place].name}, ${o.care} care.`);
 }
 /* ---- night ---- */
-function playerNight(d){
+function playerNight0(d){
   const kp=S.kp,K=S.k;let plan=kp.plan;kp.plan=null;
   if(!plan&&kp.urge>=100&&nightFree(d)){
     const opts=Object.keys(kp.known).map(Number).filter(id=>P[id].alive&&!P[id].jailed&&P[id].hangouts.some(h=>h.days.includes(wd(d))));
@@ -1293,7 +1336,7 @@ function playerNight(d){
   const late=plan.care==='high'?.1:0;
   const cs={id:S.cases.length+1,vid:t.id,day:d,foundDay:d+1,ground:pl?pl.id:null,lastSeen:pl?pl.id:null,scene,time:`${String(ri(23,26)%24).padStart(2,'0')}:${pick(['05','20','40','50'])}`,
     tr:{shoe:chance(.6*m),blood:chance(.45*m),hair:chance(.45*m),height:chance(.7*m),sex:chance(.45*m+late),car:!!k.car&&chance(.4*m+late),friend:kp.observed[t.id]?chance(.5):chance(.2)},
-    found:{},vals:{},autopsy:false,canvass:0,exams:0,trophy:pick(TROPHIES),lastSeenKnown:false,circle:makeCircle(t),circleDone:0,kcontact:chance(.15),nosig:!plan.sig,kept:!!plan.keep};
+    found:{},vals:{},autopsy:false,canvass:0,exams:0,trophy:pick(TROPHIES),lastSeenKnown:false,circle:makeCircle(t),circleDone:0,kcontact:false,nosig:!plan.sig,kept:!!plan.keep};
   cs.x=pl?pl.x+(MR()*50-25):t.hx;cs.y=pl?pl.y+(MR()*50-25):t.hy;
   if(kp.alibiTonight===d)cs.alibiHelp=true;
   S.cases.push(cs);K.kills++;
@@ -1311,7 +1354,7 @@ function caughtK(det){
   endGameK('caught',`A detective was waiting. You were stopped before you could finish.`);
 }
 /* ---- morning: news, signs, bookkeeping ---- */
-function killerMorning(){
+function killerMorning0(){
   const kp=S.kp,K=S.k,k=P[K.id];
   for(const c of S.cases.filter(c=>c.foundDay===S.day)){
     const v=P[c.vid];
@@ -1338,7 +1381,7 @@ function killerSigns(){
   });
 }
 function endGameK(kind,why){
-  S.over=true;const k=P[S.k.id];
+  S.over=true;S.endKind=kind;const k=P[S.k.id];
   const sc=scoreNow();
   let best=0;try{best=+localStorage.getItem('gski_best_killer')||0;if(sc>best)localStorage.setItem('gski_best_killer',sc)}catch(e){}
   openModal(`<div class="end"><h2>${kind==='caught'?'Stopped':kind==='turned'?'Turned in':'Convicted'}</h2><p>${why}</p>
@@ -1348,7 +1391,7 @@ function endGameK(kind,why){
   render();
 }
 /* ---- police AI ---- */
-function aiSuspects(smart){
+function aiSuspects0(smart){
   const sc={};const add=(id,n)=>{if(P[id].alive&&!P[id].jailed&&!S.cases.some(c=>c.vid==id))sc[id]=(sc[id]||0)+n};
   for(const c of S.cases.filter(c=>c.foundDay<=S.day&&c.lastSeenKnown&&c.lastSeen!=null&&!c.copySolved)){
     const rows=S.placesPulled[c.lastSeen]||[];for(const r of rows)if(r.days.includes(wd(c.day)))add(r.id,2);}
@@ -1360,7 +1403,7 @@ function aiSuspects(smart){
   for(const id of S.poi)add(id,0);
   return Object.keys(sc).map(Number).map(id=>({id,s:sc[id]+evidence(id).score*2,ex:evidence(id).ex.length})).filter(x=>!x.ex).sort((a,b)=>b.s-a.s).map(x=>x.id);
 }
-function aiAssign(){
+function aiAssign0(){
   const smart={easy:0,normal:1,hard:2}[S.cfg.diff];
   const cases=S.cases.filter(c=>c.foundDay<=S.day&&!c.copySolved);const q=[];
   for(const c of cases.slice().reverse()){
@@ -1403,9 +1446,9 @@ function aiCourt(){
     break;}}
 }
 /* ---- killer UI ---- */
-function renderKiller(){
+function renderKiller0(){
   const kp=S.kp,K=S.k,k=P[K.id];
-  if(!kp.chosen){$('kUI').innerHTML='<div class="card">Choose who you are to begin.</div>';return}
+  if(!kp.chosen){if(!UI.panelMode)$('kUI').innerHTML='<div class="card">Choose who you are to begin.</div>';return}
   const bar=(v,col)=>`<div class="bar" style="width:100%;background:#ddd"><i style="width:${Math.min(100,v)}%;background:${col}"></i></div>`;
   const known=Object.keys(kp.known).map(Number).filter(id=>P[id].alive);
   const tonight=wd(S.day);
@@ -1414,9 +1457,9 @@ function renderKiller(){
   const tab=kp.tab;
   const tabs=['today','people','map','news'].map(t=>`<button data-ktab="${t}" class="${tab===t?'on':''}">${{today:'Today',people:'People you know',map:'Map',news:'News'}[t]}</button>`).join('');
   const mp=$('mapPane');if(mp&&mp.parentElement.id!=='mapHome'&&$('mapHome'))$('mapHome').appendChild(mp);
-  let mid='';
-  if(tab==='today'){
-    mid=`<div class="card"><h2>${DAYSL[tonight]}, day ${S.day}</h2>
+  const SEC={};
+  {
+    SEC.today=`<div class="card"><h2>${DAYSL[tonight]}, day ${S.day}</h2>
     <p>Free time left today: <b>${kp.hours}h</b>${nightFree(S.day)?'':' · <b>you work tonight</b>'}${kp.plan?` · <b>Tonight: ${fullName(P[kp.plan.target])}</b>`:''}</p>
     ${UI.kmsg?`<p class="life">${UI.kmsg}</p>`:''}
     <h3>Watch a place (3h)</h3><select id="kSc">${hangs.map(h=>`<option value="${h.id}">${h.name}${kp.scouted[h.id]?' ✓':''}</option>`).join('')}</select> <button id="kScGo">Go</button>
@@ -1435,26 +1478,30 @@ function renderKiller(){
     <button id="kDes" ${kp.destroyed?'disabled':''}>Destroy what you kept (3h)</button> <button id="kPr" ${kp.press?'disabled':''}>Write to the newspaper (2h)</button>
     <select id="kCf">${known.slice(0,200).map(id=>`<option value="${id}">${fullName(P[id])}</option>`).join('')}</select> <button id="kCfGo" ${kp.confided!=null?'disabled':''}>Confide in them (1h)</button>
     <p style="margin-top:10px"><button class="primary" id="kEnd" ${S.over?'disabled':''}>${TWO()?'End your turn ▸':'End the day ▸'}</button></p></div>`;
-  }else if(tab==='people'){
-    mid=`<div class="card"><h2>People you know (${known.length})</h2><table class="res"><tr><th>Name</th><th>Age</th><th>Hair</th><th>Evenings</th><th>Lives alone?</th></tr>${known.slice(0,300).map(id=>{const p=P[id];return `<tr><td>${fullName(p)}</td><td>${p.age} ${p.sex}</td><td>${p.hair}</td><td>${p.hangouts.filter(h=>kp.scouted[h.pid]||k.hangouts.some(x=>x.pid===h.pid)).map(h=>`${PL[h.pid].name} (${dayList(h.days)})`).join(', ')||'?'}</td><td>${kp.observed[id]?(p.livesAlone?'yes':'no'):'?'}</td></tr>`}).join('')}</table></div>`;
-  }else if(tab==='map'){
-    mid=`<div id="kMapSlot"></div>`;
-  }else{
-    mid=`<div class="card"><h2>News</h2><div class="log" style="max-height:none">${kp.news.slice().reverse().map(n=>`<p class="${n.big?'big':''}"><span class="muted">Day ${n.day}:</span> ${n.html}</p>`).join('')}</div></div>`;
   }
-  $('kUI').innerHTML=`<div class="col-left"><div class="card"><h2>${fullName(k)}</h2>
+  {
+    SEC.people=`<div class="card"><h2>People you know (${known.length})</h2><table class="res"><tr><th>Name</th><th>Age</th><th>Hair</th><th>Evenings</th><th>Lives alone?</th></tr>${known.slice(0,300).map(id=>{const p=P[id];return `<tr><td>${fullName(p)}</td><td>${p.age} ${p.sex}</td><td>${p.hair}</td><td>${p.hangouts.filter(h=>kp.scouted[h.pid]||k.hangouts.some(x=>x.pid===h.pid)).map(h=>`${PL[h.pid].name} (${dayList(h.days)})`).join(', ')||'?'}</td><td>${kp.observed[id]?(p.livesAlone?'yes':'no'):'?'}</td></tr>`}).join('')}</table></div>`;
+  }
+  SEC.map=`<div id="kMapSlot"></div>`;
+  {
+    SEC.news=`<div class="card"><h2>News</h2><div class="log" style="max-height:none">${kp.news.slice().reverse().map(n=>`<p class="${n.big?'big':''}"><span class="muted">Day ${n.day}:</span> ${n.html}</p>`).join('')}</div></div>`;
+  }
+  SEC.life=`<div class="card"><h2>${fullName(k)}</h2>
    <p>${k.age}, ${k.job}${k.place!=null?' at '+PL[k.place].name+` (${k.shift}, ${dayList(k.workdays)})`:''}<br>${k.household}${K.house?` (${K.house.name})`:''} · ${k.district}<br>${k.car?k.car+' car':'No car'} · Evenings: ${k.hangouts.map(h=>PL[h.pid].name).join(', ')||'home'}</p>
    <p><b>Urge</b> ${kp.urge}${kp.urge>=100?' · <b style="color:var(--red)">it will take over tonight</b>':''}${bar(kp.urge,'var(--red)')}</p>
    ${K.house?`<p><b>${K.house.name} seems</b> ${K.house.susp<30?'unbothered':K.house.susp<60?'a little uneasy':K.house.susp<85?'worried':'frightened of you'}.</p>`:''}
    <p><b>Your things are</b> ${STASH[K.stash].label}${kp.keep?' (you have kept items)':''}.</p>
-   <p><b>Signature:</b> ${kp.sig||'none yet'}${kp.sigChanged?' (changed)':''}</p></div>
-   <div class="card"><h2>Score</h2><p style="font-size:22px;font-family:'IBM Plex Mono'">${scoreNow()}</p><p class="muted" style="font-size:12px">${kp.daysFree} days free ×10 · ${kp.low} quiet days ×5 · consistency ${(consistency()*100|0)}% · ${riskCount()} risky choices</p></div></div>
-   <div class="col-mid"><div class="tabs">${tabs}</div>${mid}</div>
-   <div class="col-right"><div class="card"><h2>What you've noticed</h2><div class="log">${kp.signs.slice().reverse().map(s=>`<p><span class="muted">Day ${s.day}:</span> ${s.txt}</p>`).join('')||'<p class="muted">Nothing unusual.</p>'}</div></div>
-   <div class="card"><h2>In the papers</h2><p>${S.nick?`They call you <b>${S.nick}</b>.`:'No name yet.'}</p><p>Public pressure on the police: ${S.pressure}</p></div></div>`;
+   <p><b>Signature:</b> ${kp.sig||'none yet'}${kp.sigChanged?' (changed)':''}</p></div>`;
+  SEC.score=`<div class="card"><h2>Score</h2><p style="font-size:22px;font-family:'IBM Plex Mono'">${scoreNow()}</p><p class="muted" style="font-size:12px">${kp.daysFree} days free ×10 · ${kp.low} quiet days ×5 · consistency ${(consistency()*100|0)}% · ${riskCount()} risky choices</p></div>`;
+  SEC.signs=`<div class="card"><h2>What you've noticed</h2><div class="log">${kp.signs.slice().reverse().map(s=>`<p><span class="muted">Day ${s.day}:</span> ${s.txt}</p>`).join('')||'<p class="muted">Nothing unusual.</p>'}</div></div>`;
+  SEC.papers=`<div class="card"><h2>In the papers</h2><p>${S.nick?`They call you <b>${S.nick}</b>.`:'No name yet.'}</p><p>Public pressure on the police: ${S.pressure}</p></div>`;
+  const midOf={today:SEC.today,people:SEC.people,map:SEC.map,news:SEC.news};
+  if(UI.panelMode)fillPanels('killer',SEC);
+  else $('kUI').innerHTML=`<div class="col-left">${SEC.life}${SEC.score}</div><div class="col-mid"><div class="tabs">${tabs}</div>${midOf[tab]}</div><div class="col-right">${SEC.signs}${SEC.papers}</div>`;
   document.querySelectorAll('[data-ktab]').forEach(b=>b.onclick=()=>{kp.tab=b.dataset.ktab;render()});
-  if(tab==='map'){const mp=$('mapPane');$('kMapSlot').appendChild(mp);mp.style.display='';renderMap()}
-  if(tab!=='today')return;
+  if((UI.panelMode&&panelOpen('killer','kmap'))||(!UI.panelMode&&tab==='map')){const mp=$('mapPane');$('kMapSlot').appendChild(mp);mp.style.display='';renderMap()}
+  if(!UI.panelMode&&tab!=='today')return;
+  if(!$('kScGo'))return;
   const fillP=()=>{if(!$('kT'))return;const p=P[+$('kT').value];const opts=p.hangouts.filter(h=>h.days.includes(tonight)).map(h=>`<option value="${h.pid}">at ${PL[h.pid].name}</option>`);if(kp.observed[p.id]&&p.livesAlone)opts.push('<option value="home">at their home</option>');$('kP').innerHTML=opts.join('')};
   if($('kT')){$('kT').onchange=fillP;fillP();$('kGo').onclick=()=>kPlan({target:+$('kT').value,place:$('kP').value==='home'?'home':+$('kP').value,care:$('kCare').value,keep:$('kKeep').checked,sig:$('kSig').value||null})}
   $('kScGo').onclick=()=>kScout(+$('kSc').value);if($('kObGo'))$('kObGo').onclick=()=>kObserve(+$('kOb').value);
@@ -1475,14 +1522,532 @@ const TUT=[
 function renderTutorial(){
   let box=$('tutBox');
   if(!S.cfg.tutorial||UI.tutHide){if(box)box.remove();return}
-  if(UI.tab==='wall')UI.seenWall=true;if(UI.tab==='map')UI.seenMap=true;
+  if(UI.tab==='wall'||(UI.panelMode&&panelOpen('police','wall')))UI.seenWall=true;if(UI.tab==='map'||(UI.panelMode&&panelOpen('police','map')))UI.seenMap=true;
   while(UI.tutStep<TUT.length-1&&UI.tutStep>0&&TUT[UI.tutStep][2]())UI.tutStep++;
   const [t,b]=TUT[UI.tutStep];
-  if(!box){box=document.createElement('div');box.id='tutBox';box.className='card';box.style.cssText='border:3px solid #ffd54a';document.querySelector('#mainG .col-mid').prepend(box)}
+  if(!box){box=document.createElement('div');box.id='tutBox';box.className='card';box.style.cssText='border:3px solid #ffd54a';(UI.panelMode?$('pb-cases'):document.querySelector('#mainG .col-mid')).prepend(box)}
   box.innerHTML=`<h2>Tutorial ${UI.tutStep+1}/${TUT.length}: ${t}</h2><p>${b}</p><button class="small" id="tutNext">${UI.tutStep<TUT.length-1?'Next':'Done'}</button> <button class="small" id="tutHide">Hide tips</button>`;
   $('tutNext').onclick=()=>{if(UI.tutStep<TUT.length-1)UI.tutStep++;else UI.tutHide=true;render()};
   $('tutHide').onclick=()=>{UI.tutHide=true;render()};
 }
+/* ================= V3: KILLER MODE OVERHAUL ================= */
+const WEALTH=['indigent','poor','middle','comfortable','wealthy'];
+const START_MONEY=[0,20,80,250,1000],WEEK_PAY=[0,30,80,150,350];
+function wealthOf(p){
+  if(p.wl!=null)return p.wl;
+  const r=mulberry32((S.seed^(p.id*40503))>>>0)();const j=p.job||'';
+  let w;
+  if(/Doctor|Dentist|Manager|Councillor|Lecturer|Editor/.test(j))w=r<.5?3:4;
+  else if(/Teacher|Nurse|Accountant|Planner|Police|Supervisor|Claims|Reporter/.test(j))w=r<.6?2:3;
+  else if(/Between jobs/.test(j))w=r<.35?0:1;
+  else if(/Retired/.test(j))w=r<.3?1:r<.8?2:3;
+  else if(/Student/.test(j))w=1;
+  else if(/Self-employed|Freelance|Writer|Piano|Online/.test(j))w=r<.3?1:r<.8?2:3;
+  else w=r<.5?1:2;
+  return p.wl=w;
+}
+const MEANS={
+  hands:{label:'Bare hands',free:true,time:1,mods:{hair:1.3,blood:.6},cause:'manual strangulation'},
+  improvised:{label:'Something found at the scene',free:true,time:1,mods:null,cause:'an object found at the scene'},
+  blunt:{label:'Something heavy from home',free:true,time:.5,mods:{blood:1.3},bloody:.5,cause:'blunt force'},
+  cord:{label:'Cord',cost:5,obtainH:1,rec:.3,shop:'hardware shop',time:1,mods:{hair:1.1},cause:'ligature strangulation'},
+  blade:{label:'Blade',cost:15,obtainH:1,rec:.4,shop:'hardware shop',time:.5,mods:{blood:1.6},bloody:.8,cause:'a stab wound'},
+  poison:{label:'Poison',cost:40,obtainH:3,rec:.7,shop:'pharmacy or garden centre',time:2,mods:{shoe:.5,hair:.5,blood:.2,sex:.5},minW:2,cause:'poisoning'},
+  vehicle:{label:'Your car',free:true,time:.5,mods:{car:2.5,shoe:.2,hair:.3},needCar:true,routeOnly:true,cause:'injuries consistent with being struck by a car'}
+};
+const GEAR={gloves:{label:'Gloves',cost:5,obtainH:1,rec:.2},mask:{label:'A mask',cost:10,obtainH:1,rec:.3},covers:{label:'Shoe covers',cost:8,obtainH:1,rec:.3},clothes:{label:'A change of clothes',cost:15,obtainH:1,rec:.2}};
+const DISPOSE={bin:{label:'a street bin',h:1,p:.04,days:10},river:{label:'the river',h:2,p:.01,days:30},burn:{label:'burning it',h:2,p:.005,days:30},bury:{label:'burying it',h:3,p:.015,days:40},far:{label:'a bin across the city',h:3,p:.02,days:10}};
+const DES_KEYS=['sex','age','hair','alone','kind'];
+function desText(d){return d.k==='sex'?(d.v==='F'?'women':'men'):d.k==='age'?`people in their ${d.v}s`:d.k==='hair'?`people with ${d.v} hair`:d.k==='alone'?(String(d.v)==='true'?'people who live alone':'people who live with others'):`people found ${d.v==='home'?'at home':'at a '+d.v}`}
+function genDesires(){
+  const ks=shuffle(DES_KEYS.slice()).slice(0,2);
+  return ks.map(k=>({k,v:k==='sex'?pick(['F','M']):k==='age'?pick([20,30,40,50]):k==='hair'?pick(['blonde','red','black','brown']):k==='alone'?true:pick(['bar','park','cafe','gym','laundromat','home','diner'])}));
+}
+function desireFit(a){const d=S.kp.desires;if(!d||!d.length)return 1;return d.filter(x=>String(a[x.k])===String(x.v)).length/d.length}
+function jlog(t){S.kp.dayLog.push(t)}
+const _initKM=initKillerMode0;
+function initKillerMode(){_initKM();Object.assign(S.kp,{money:0,wealth:2,means:{},gear:{},items:[],bags:[],tired:0,lull:0,desires:[],journal:[],dayLog:[],journalFull:false,loot:0,cards:[],policeJob:false});S.purchases=[];S.seenRec={};S.dumped=[];S.cardUses=[];S.pullDay={}}
+const _setPK=setPlayerKiller0;
+function setPlayerKiller(id,wl){
+  const p=P[id];const w=wl!=null?wl:wealthOf(p);p.wl=w;
+  if(w===0){p.car=null;p.household='Sleeps at a night shelter';p.livesAlone=true}
+  if(w===4&&!p.car)p.car=pick(['black','silver','grey','white']);
+  _setPK(id);
+  const kp=S.kp;kp.wealth=w;kp.money=START_MONEY[w];kp.desires=genDesires();
+  kp.policeJob=/Police officer/.test(p.job||'');
+  if(kp.policeJob){p.workdays=shuffle([0,1,2,3,4,5,6]).slice(0,5).sort()}
+  if(w===0)S.k.stash='outside';
+  kp.hours=freeHours(S.day);
+  news(`Wealth: ${WEALTH[w]}. Money: ${kp.money}. You find yourself drawn to ${kp.desires.map(desText).join(', and to ')}.`);
+  if(kp.policeJob&&UI.lay&&UI.lay.killer&&UI.lay.killer.kstation){UI.lay.killer.kstation.open=true;UI.lay.killer.kstation.z=99;applyLayout('killer')}
+}
+function freeHours(d){
+  const k=P[S.k.id],w=wd(d),kp=S.kp;let h;
+  if(!k.workdays.includes(w)||!k.shift)h=12;else if(k.shift==='evening')h=4;else if(k.shift==='night')h=5;else h=6;
+  if(kp&&kp.policeJob&&k.workdays.includes(w))h-=2;
+  if(kp&&kp.wealth===4)h+=2;
+  if(kp&&kp.tired>=6)h-=2;
+  return Math.max(1,h);
+}
+function travelH(x,y){const k=P[S.k.id];const d=Math.hypot(k.hx-x,k.hy-y);return Math.ceil(d/(k.car?360:S.kp.wealth>=3?240:150))}
+function kBuy(key){
+  const it=MEANS[key]||GEAR[key];const kp=S.kp;
+  if(it.minW&&kp.wealth<it.minW&&kp.money<it.cost*2){kMsg(`You can't get ${it.label.toLowerCase()} without more money.`);return}
+  if(kp.money<it.cost){kMsg(`Not enough money (needs ${it.cost}).`);return}
+  if(!kSpend(it.obtainH))return;kp.money-=it.cost;
+  if(MEANS[key])kp.means[key]={uses:0,bloody:false};else kp.gear[key]=true;
+  const card=kp.wealth>=2&&chance(.7);
+  if(chance(it.rec*(card?1.3:.6)))S.purchases.push({id:S.k.id,cat:key,day:S.day,shop:it.shop||'shop',card});
+  jlog(`Bought ${it.label.toLowerCase()}${card?' with a card':' with cash'}.`);
+  kMsg(`You got ${it.label.toLowerCase()} (${it.cost}). ${card?'You paid by card.':'You paid cash.'}`);
+}
+function kBeg(){if(S.kp.wealth!==0)return;if(!kSpend(4))return;const g=ri(2,8);S.kp.money+=g;jlog(`Begged near the station for four hours. ${g} in coins.`);kMsg(`You begged for four hours: +${g}.`)}
+function kSteal(){if(!kSpend(2))return;
+  if(chance(.08)){const K2=pk(S.k.id);K2.blood=P[S.k.id].blood;K2.theft=true;addLog(`${plink(S.k.id)} was caught shoplifting and cautioned. A sample was taken.`);sign('You were caught stealing and cautioned. They took a sample.');jlog('Caught stealing. Cautioned.');kMsg('<b>You were caught and cautioned.</b> The police took your details and a sample.');return}
+  const g=ri(10,40);S.kp.money+=g;jlog(`Took ${g} that wasn't mine.`);kMsg(`You stole ${g}.`)}
+function kUseCard(){const kp=S.kp;const c=kp.cards.find(x=>!x.used);if(!c)return;if(!kSpend(1))return;c.used=true;const g=ri(30,120);kp.money+=g;
+  const shops=PL.filter(x=>['shop','market'].includes(x.kind));const sh=pick(shops.length?shops:PL);
+  S.cardUses.push({cid:c.cid,day:S.day,pid:sh.id});addLog(`The bank reports that a card belonging to ${plink(P[S.cases.find(x=>x.id===c.cid).vid].id)} was used at ${sh.name}.`);
+  jlog(`Used the card at ${sh.name}.`);kMsg(`You used a stolen card at ${sh.name}: +${g}. Cards leave records.`)}
+function kSell(){const kp=S.kp;if(kp.loot<1)return;if(!kSpend(1))return;kp.loot--;const g=ri(10,40);kp.money+=g;
+  if(chance(.4)){S.pawn=(S.pawn||[]).concat({day:S.day+ri(3,6)})}
+  jlog(`Sold something at a pawn shop.`);kMsg(`You sold stolen goods: +${g}. Pawn shops keep records.`)}
+function kDispose(kind,idx,how){
+  const kp=S.kp,D=DISPOSE[how];if(!kSpend(D.h))return;
+  let desc,cid,trace;
+  if(kind==='means'){desc=MEANS[idx].label.toLowerCase();trace=kp.means[idx].bloody;delete kp.means[idx]}
+  else if(kind==='bag'){const b=kp.bags.splice(idx,1)[0];desc='a bag of clothes';cid=b.cid;trace=true}
+  else{const it=kp.items.splice(idx,1)[0];desc=it.desc;cid=it.cid;trace=true}
+  if(how==='burn'&&S.k.house)S.k.house.susp+=6;
+  S.dumped.push({desc,cid,until:S.day+D.days,p:D.p,x:how==='far'?MR()*MAPW:P[S.k.id].hx,y:how==='far'?MR()*MAPH:P[S.k.id].hy,mine:trace&&!kp.lastGloves});
+  jlog(`Got rid of ${desc} by ${D.label}.`);kMsg(`You got rid of ${desc} (${D.label}).`)}
+function kPlant(idx,target,spot,tip){
+  const kp=S.kp;if(!kSpend(2))return;const it=kp.items.splice(idx,1)[0];const t=P[target];
+  if(spot==='car'&&!t.car){kp.items.splice(idx,0,it);kMsg(`${fullName(t)} has no car.`);return}
+  const T2=pk(target);(T2.planted=T2.planted||[]).push({cid:it.cid,spot,desc:it.desc});
+  if(chance(.1)){const r=wit('sex',P[S.k.id].sex,'Neighbour (planting)',.8);addLog(`A neighbour of ${plink(target)} reports seeing a ${r.v==='F'?'woman':'man'} at ${his(t)} ${spot} late at night.`);sign(`Someone may have seen you near ${fullName(t)}'s ${spot}.`)}
+  if(spot==='bin')S.binFinds=(S.binFinds||[]).concat({target,day:S.day+1,desc:it.desc,cid:it.cid});
+  if(tip){addLog(`<b>Anonymous tip:</b> "Look at ${plink(target)}."`);T2.tipped=true;if(!S.poi.includes(target)&&AIP())S.poi.push(target)}
+  jlog(`Left ${it.desc} in ${fullName(t)}'s ${spot}.`);kMsg(`You left ${it.desc} in ${fullName(t)}'s ${spot}.${tip?' You called in a tip.':''}`)}
+function kSend(idx,to,far){
+  const kp=S.kp;if(!kSpend(far?4:2))return;const it=kp.items.splice(idx,1)[0];
+  const dist=far?pick(DISTRICTS):P[S.k.id].district;
+  S.pressure+=15;S.postmark=dist;
+  news(`<b>${to==='press'?'The Daily Ledger':'The family of '+fullName(P[S.cases.find(c=>c.id===it.cid).vid])}</b> received a package containing ${it.desc}. Police have taken it.`,true);
+  addLog(`<b>A package arrived</b> (${to==='press'?'at The Daily Ledger':"at a victim's family home"}) containing ${it.desc}. Postmarked in ${dist}. Sent to the lab.`,true);
+  if(!kp.lastGloves)labQueue({type:'print'},3);
+  kp.press=true;jlog(`Posted ${it.desc} to ${to==='press'?'the newspaper':'the family'}, from ${dist}.`);kMsg(`You sent ${it.desc}. It can't be taken back.`)}
+function kWalk(dist){
+  if(!kSpend(3))return;const kp=S.kp;const res=shuffle(P.filter(p=>p.alive&&p.district===dist&&p.id!==S.k.id)).slice(0,25);
+  for(const p of res){kp.known[p.id]=true;if(chance(.4))kp.observed[p.id]=true}
+  jlog(`Walked the streets of ${dist} for three hours, watching the houses.`);kMsg(`You walked the streets of ${dist}, watching houses. You noted ${res.length} residents, and which of some of them live alone.`)}
+function kStation(kind,arg){
+  const kp=S.kp,K=S.k,k=P[K.id];if(!kp.policeJob)return;if(!k.workdays.includes(wd(S.day))){kMsg("You're not on shift today.");return}
+  if(kind==='misplace'){if(!kSpend(2))return;delete S.known[arg];delete S.wit[arg];jlog(`At the station, a piece of evidence went missing.`);
+    if(chance(.15)){pk(K.id).tamper=true;sign('Internal affairs has opened an inquiry.');addLog(`<b>Internal affairs</b> is investigating missing evidence. Suspicion falls on ${plink(K.id)}.`,true);if(!S.poi.includes(K.id))S.poi.push(K.id)}
+    kMsg(`The ${arg} evidence is no longer on file.`)}
+  else{if(!kSpend(1))return;S.steer={id:arg,until:S.day+7};jlog(`Mentioned ${fullName(P[arg])} to colleagues.`);
+    if(chance(.1)){pk(K.id).tamper=true;sign('Internal affairs has opened an inquiry.');addLog(`<b>Internal affairs</b> notes that ${plink(K.id)} keeps steering the case.`,true);if(!S.poi.includes(K.id))S.poi.push(K.id)}
+    kMsg(`You pointed colleagues at ${fullName(P[arg])}.`)}
+}
+function kPlan(o){
+  const kp=S.kp,t=P[o.target],M=MEANS[o.means];
+  let x,y;if(o.mode==='home'){x=t.hx;y=t.hy}else{const pl=PL[o.pid];x=pl.x;y=pl.y;if(o.mode==='route'){x=(pl.x+t.hx)/2;y=(pl.y+t.hy)/2}}
+  if(M.needCar&&!P[S.k.id].car){kMsg('You need a car for that.');return}
+  if(M.routeOnly&&o.mode!=='route'){kMsg('That only works on someone on their way home.');return}
+  if(o.means!=='hands'&&o.means!=='improvised'&&o.means!=='blunt'&&o.means!=='vehicle'&&!kp.means[o.means]){kMsg(`You don't have ${M.label.toLowerCase()}.`);return}
+  const need=travelH(x,y)+3+Math.ceil(M.time)+(o.care==='high'?2:0)+Math.ceil(o.gear.length*.5);
+  if(kp.hours<need){kMsg(`Not enough free time tonight (needs ${need}h, including travel).`);return}
+  if(!nightFree(S.day)){kMsg('You work tonight.');return}
+  kp.hours-=need;o.x=x;o.y=y;kp.plan=o;
+  kMsg(`Planned for tonight: ${fullName(t)}, ${o.mode==='home'?'at their home':o.mode==='route'?'on their way home from '+PL[o.pid].name:'at '+PL[o.pid].name}. ${need}h.`);
+}
+function playerNight(d){
+  const kp=S.kp,K=S.k,k=P[K.id];let plan=kp.plan;kp.plan=null;kp.lastGloves=false;
+  if(!plan&&kp.urge>=100&&nightFree(d)){
+    const opts=Object.keys(kp.known).map(Number).filter(id=>P[id].alive&&!P[id].jailed&&P[id].hangouts.some(h=>h.days.includes(wd(d))));
+    if(opts.length){const t=P[pick(opts)];const h=t.hangouts.find(h=>h.days.includes(wd(d)));plan={target:t.id,mode:'place',pid:h.pid,means:'improvised',care:'low',gear:[],keep:false,rob:false,sig:kp.sig,x:PL[h.pid].x,y:PL[h.pid].y};kp.forcedMsg=true}
+  }
+  if(!plan){if(!kp.dayLog.length)jlog(pick(['A quiet evening at home.','Television. Early night.','Nothing of note.']));return}
+  const t=P[plan.target],w=wd(d);
+  const pl=plan.mode==='home'?null:PL[plan.pid];
+  const where=plan.mode==='home'?`${t.first}'s home`:plan.mode==='route'?`the streets between ${pl.name} and ${t.first}'s home`:pl.name;
+  if(!t.alive){kp.result='They were already gone.';jlog('Went out. Nothing happened.');return}
+  const present=plan.mode==='home'?true:(presentAt(t,plan.pid,w)||(t.place===plan.pid&&t.shift==='evening'&&t.workdays.includes(w)));
+  if(!present){kp.result=`${fullName(t)} didn't come to ${pl.name} tonight. Nothing happened.`;jlog(`Waited near ${pl.name}. ${t.first} never came.`);return}
+  const dist=districtAt(plan.x,plan.y);
+  if(S.vigTonight&&S.vigTonight===dist){kp.result=`A neighbourhood patrol was out in ${dist}. You went home.`;jlog(`A patrol in ${dist}. Turned back.`);return}
+  const tl=S.tails.find(x=>x.id===K.id);
+  if(tl){if(chance(.1+.15*tl.s)){caughtK(tl.det);return}if(chance(.5)){K.heat+=25;kp.result='Headlights stayed behind you all the way. You turned around and went home.';sign('A car seemed to follow you tonight.');jlog('Followed. Went home.');return}}
+  if(pl){const so=S.stakeouts.filter(x=>x.pid==plan.pid);if(so.length){const b=so.reduce((a,c)=>a.s>c.s?a:c);if(chance(.2+.2*b.s)){caughtK(b.det);return}if(chance(.6)){K.heat+=25;kp.result=`An unmarked car sat outside ${pl.name} all night. You left.`;sign(`An unmarked car sat outside ${pl.name}.`);jlog(`Police outside ${pl.name}. Left.`);return}}}
+  // the act
+  const M=MEANS[plan.means],g=new Set(plan.gear);kp.lastGloves=g.has('gloves');
+  let m=DIFF[S.cfg.diff].trace*(plan.care==='low'?1.4:plan.care==='high'?.55:1)*(kp.tired>=6?1.2:1);
+  const mod=key=>{let v=m;const mm=M.mods||{shoe:.6+MR(),hair:.6+MR(),blood:.6+MR(),sex:.6+MR(),car:.6+MR()};if(mm[key]!=null)v*=mm[key];
+    if(key==='blood'&&g.has('gloves'))v*=.25;if(key==='shoe'&&g.has('covers'))v*=.15;if(key==='hair'&&g.has('clothes'))v*=.5;if(key==='sex'&&g.has('mask'))v*=.6;return v};
+  t.alive=false;
+  const scene=plan.mode==='home'?`at ${his(t)} home in ${t.district}`:plan.mode==='route'?`on ${pick(STREETS)} Street, between ${pl.name} and ${his(t)} home`:`${pick(['in an alley off','on a footpath near','in the car park behind','in a service lane beside'])} ${pl.name}, ${pl.district}`;
+  if(plan.sig&&kp.sig&&plan.sig!==kp.sig)kp.sigChanged=true;
+  if(plan.sig&&!kp.sig)kp.sig=plan.sig;
+  if(plan.sig)K.token=plan.sig;
+  const late=plan.care==='high'?.1:0;
+  const cs={id:S.cases.length+1,vid:t.id,day:d,foundDay:d+1,ground:pl?pl.id:null,lastSeen:pl?pl.id:null,scene,time:`${String(ri(23,26)%24).padStart(2,'0')}:${pick(['05','20','40','50'])}`,
+    tr:{shoe:chance(.6*mod('shoe')),blood:chance(.45*mod('blood')),hair:chance(.45*mod('hair')),height:chance(.7*m),sex:chance(.45*mod('sex')+late),car:!!k.car&&chance(Math.min(.95,(.4+late)*mod('car'))),friend:kp.observed[t.id]?chance(.5):chance(.2)},
+    found:{},vals:{},autopsy:false,canvass:0,exams:0,trophy:pick(TROPHIES),lastSeenKnown:false,circle:makeCircle(t),circleDone:0,kcontact:false,nosig:!plan.sig,kept:!!plan.keep,methodLabel:M.cause,meansKey:plan.means,x:plan.x+(MR()*30-15),y:plan.y+(MR()*30-15)};
+  if(kp.alibiTonight===d)cs.alibiHelp=true;
+  if(plan.leave!=null&&kp.items[plan.leave]){const it=kp.items.splice(plan.leave,1)[0];cs.leftItem=it}
+  S.cases.push(cs);K.kills++;
+  if(K.house)K.house.susp+=12;
+  // seen where you act
+  if(pl){const sc=(pl.kind!=='park'?.3:0)+(plan.mode==='place'?.25:.1);if(chance(sc))(S.seenRec[pl.id]=S.seenRec[pl.id]||[]).push({id:K.id,w:w,how:pick(['a card payment','CCTV','staff memory'])})}
+  // keep / rob
+  if(plan.keep)kp.items.push({cid:cs.id,desc:`${t.first} ${t.last}'s ${cs.trophy}`,where:'stash'});
+  if(plan.rob){const tw=wealthOf(t);const g=plan.mode==='home'?ri(20,150)*(1+tw):ri(5,40)*(1+tw);kp.money+=g;if(chance(.6))kp.cards.push({cid:cs.id,used:false});if(plan.mode==='home')kp.loot+=ri(1,3);cs.robbed=true;jlog(`Took ${g} in cash${plan.mode==='home'?' and some valuables':''}.`)}
+  // means & clothes
+  if(kp.means[plan.means]){kp.means[plan.means].uses++;if(M.bloody&&chance(M.bloody))kp.means[plan.means].bloody=true}
+  if(g.has('clothes')||(M.bloody&&chance(M.bloody)))kp.bags.push({cid:cs.id});
+  kp.tired+=3;kp.lull=2;
+  const attrs=vAttrs(t,pl?pl.kind:'home'),fit=patternFit(attrs),df=desireFit(attrs);
+  kp.acts.push({cid:cs.id,attrs,fit,df,means:plan.means,care:plan.care,where,mode:plan.mode,name:fullName(t),day:d});
+  kp.urge=Math.max(0,kp.urge-Math.round(70*(.3+.4*df+.3*fit)));
+  if(chance(.25)){const dk=pick(kp.desires);const tally={};for(const a of kp.acts)tally[a.attrs[dk.k]]=(tally[a.attrs[dk.k]]||0)+1;const top=Object.entries(tally).sort((a,b)=>b[1]-a[1])[0];if(top&&String(top[0])!==String(dk.v)&&top[1]>=2){dk.v=dk.k==='age'?+top[0]:dk.k==='alone'?top[0]==='true':top[0];jlog(`Something has shifted. Now it is ${desText(dk)}.`)}}
+  jlog(`${t.first} ${t.last}. ${where[0].toUpperCase()+where.slice(1)}. ${M.label}, ${plan.care} care${plan.gear.length?', '+plan.gear.map(x=>GEAR[x].label.toLowerCase()).join(', '):''}. Home before dawn.`);
+  kp.result=null;
+}
+const _kMorning=killerMorning0;
+function killerMorning(){
+  const kp=S.kp,K=S.k;
+  // journal for the day just ended
+  const d=S.day-1,k=P[K.id];
+  if(kp.dayLog.length){
+    const work=k.shift&&k.workdays.includes(wd(d))?`${k.job}${k.place!=null?' at '+PL[k.place].name:''}, ${k.shift} shift.`:'No work.';
+    const short=kp.dayLog.slice(0,3).join(' ');
+    const full=`${DAYSL[wd(d)]}, day ${d}. ${work} ${kp.dayLog.join(' ')} ${pick(['Slept badly.','Slept well enough.','Woke early.','Nothing felt different.'])} ${S.nick?`The papers still call it "${S.nick}".`:''}`.replace(/\s+/g,' ');
+    kp.journal.push({day:d,short,full});kp.dayLog=[];
+  }
+  const lullNow=kp.lull>0;
+  _kMorning();
+  if(S.over)return;
+  if(lullNow){kp.urge=Math.max(0,kp.urge-7);kp.lull--}
+  kp.tired=Math.max(0,kp.tired-1);
+  if(wd(S.day)===0){const pay=k.place!=null||k.shift?WEEK_PAY[kp.wealth]:0;if(pay){kp.money+=pay;news(`Payday: +${pay}.`)}
+    if(K.stash==='storage'&&kp.wealth<3){if(kp.money>=10)kp.money-=10;else{news('<b>You missed the rent on your storage unit.</b> It was cleared out.',true);addLog(`A storage company cleared a unit for unpaid rent and reported its contents to police. It was rented by ${plink(K.id)}.`,true);pk(K.id).stashKnown=true;pk(K.id).storage=true;const K2=pk(K.id);for(const it of kp.items)if(!K2.trophies.includes(it.cid))K2.trophies.push(it.cid);if(kp.sig)K2.token=true;kp.items=[];if(!S.poi.includes(K.id))S.poi.push(K.id)}}}
+  // things found
+  for(const x of S.dumped.slice())if(S.day<=x.until&&chance(x.p)){S.dumped.splice(S.dumped.indexOf(x),1);
+    addLog(`<b>Found:</b> ${x.desc}, ${districtAt(x.x,x.y)} district.${x.cid?` Linked to case #${x.cid}.`:''}${x.mine?' Sent to the lab.':''}`,true);news(`Police say they have found an item in ${districtAt(x.x,x.y)} that may be linked to the killings.`,true);if(x.mine)labQueue({type:'print'},3)}
+  for(const b of (S.binFinds||[]).filter(b=>b.day<=S.day)){const T2=pk(b.target);if(!T2.trophies.includes(b.cid))T2.trophies.push(b.cid);addLog(`<b>Refuse workers found ${b.desc}</b> in the bin of ${plink(b.target)}.`,true);news(`An item linked to the killings was found in a bin in ${P[b.target].district}. Police are questioning the householder.`,true);if(!S.poi.includes(b.target))S.poi.push(b.target)}
+  S.binFinds=(S.binFinds||[]).filter(b=>b.day>S.day);
+  for(const x of (S.pawn||[]).filter(x=>x.day<=S.day)){pk(K.id).pawned=true;addLog(`A pawn shop's records show ${plink(K.id)} sold an item belonging to a victim.`,true);if(!S.poi.includes(K.id))S.poi.push(K.id)}
+  S.pawn=(S.pawn||[]).filter(x=>x.day>S.day);
+  if(S.pressure>50&&chance(.3))sign(`More police cars than usual around ${P[K.id].district}.`);
+  kp.hours=freeHours(S.day);
+}
+/* ---- police side: new tasks ---- */
+const EXTRA={
+  screen:(as,det,ch)=>{const ar=S.areas.find(a=>a.id==as.t);if(!ar){addLog(`${det.name} had no area for screening.`);return}
+    const K=S.known,res=P.filter(p=>p.alive&&!p.jailed&&Math.hypot(p.hx-ar.x,p.hy-ar.y)<=ar.r&&(!K.sex||p.sex===K.sex.v)&&p.age>=18);
+    let ok=0,ref=[];for(const p of res){const K2=pk(p.id);if(K2.blood)continue;if((p.id===S.k.id&&!(KM()&&S.kp.sampleChoice==='comply'))||(p.id!==S.k.id&&chance(.15))){K2.refused=true;K2.refusedScreen=true;ref.push(p.id)}else{K2.blood=p.blood;ok++}}
+    if(!S.cfg.mode||!KM())S.budget-=0;
+    if(res.some(p=>p.id===S.k.id))sign(ref.includes(S.k.id)?'Police asked everyone on your street for a blood sample. You said no.':'Police asked everyone on your street for a blood sample. You gave one.');
+    addLog(`${det.name} ran a blood screening drive in ${ar.name}: ${ok} samples taken; ${ref.length} refused${ref.length?': '+ref.slice(0,10).map(plink).join(', ')+(ref.length>10?'…':''):''}.`,true)},
+  purch:(as,det)=>{const c=S.cases.find(x=>x.id==(as.t==='auto'?(S.cases.filter(x=>x.foundDay<=S.day).at(-1)||{}).id:as.t));if(!c){return}
+    let rows=(S.purchases||[]).filter(r=>r.cat===c.meansKey&&r.day>=c.day-30&&r.day<=c.day);
+    if(rows.length||(c.meansKey&&!MEANS[c.meansKey].free)){const n={cord:ri(4,10),blade:ri(6,14),poison:ri(1,4)}[c.meansKey]||0;
+      for(let i=0;i<n;i++){const q=pick(P.filter(x=>x.alive&&x.age>=18));rows.push({id:q.id,cat:c.meansKey,day:c.day-ri(1,30)})}rows=shuffle(rows)}
+    if(!c.autopsy||!c.meansKey||!rows.length){addLog(`${det.name} checked shop records for case #${c.id}: nothing useful.`);return}
+    for(const r of rows){(pk(r.id).bought=pk(r.id).bought||[]).push(r.cat)}
+    addLog(`${det.name} checked shop records for case #${c.id}: ${rows.map(r=>`${plink(r.id)} bought ${MEANS[r.cat].label.toLowerCase()} on day ${r.day}`).join('; ')}.`,true)},
+  card:(as,det,ch)=>{const c=S.cases.find(x=>x.id==(as.t==='auto'?(S.cases.filter(x=>x.foundDay<=S.day).at(-1)||{}).id:as.t));const u=(S.cardUses||[]).filter(x=>c&&x.cid===c.id&&!x.checked);
+    if(!u.length){addLog(`${det.name} checked bank records for case #${c?c.id:'?'}: the victim's cards haven't been used.`);return}
+    const k=P[S.k.id];for(const x of u){x.checked=true;if(chance(ch)){const r=wit('sex',k.sex,`CCTV at ${PL[x.pid].name}`,.9);mergeHeight(k.height-5,k.height+5,`CCTV at ${PL[x.pid].name}`);knowTrait('hair',k.hair,`CCTV at ${PL[x.pid].name}`);S.cardDist=PL[x.pid].district;
+      addLog(`${det.name} got CCTV from ${PL[x.pid].name}, where case #${c.id}'s card was used: a ${r.v==='F'?'woman':'man'}, about ${k.height} cm, ${k.hair} hair.`,true)}else addLog(`${det.name}: the CCTV at ${PL[x.pid].name} was too poor to use.`)}}
+};
+const _aiAssign=aiAssign0;
+function aiAssign(){
+  const cases=S.cases.filter(c=>c.foundDay<=S.day&&!c.copySolved);
+  // re-pull lists when new cases point at a place again
+  for(const c of cases)if(c.lastSeenKnown&&c.lastSeen!=null&&S.placesPulled[c.lastSeen]&&(S.pullDay[c.lastSeen]||0)<c.foundDay)delete S.placesPulled[c.lastSeen];
+  // geographic profiling
+  if(cases.length>=3){const cx=cases.reduce((a,c)=>a+c.x,0)/cases.length,cy=cases.reduce((a,c)=>a+c.y,0)/cases.length;
+    const r=Math.max(50,Math.min(110,cases.reduce((a,c)=>a+Math.hypot(c.x-cx,c.y-cy),0)/cases.length));
+    const g=S.areas.find(a=>a.id===S.geoArea);
+    if(!g||Math.hypot(g.x-cx,g.y-cy)>60){const a=makeArea({x:cx,y:cy,r});a.name='Profile area '+a.id;S.geoArea=a.id;addLog(`Detectives estimate the killer lives in or near <a class="pl" data-area="${a.id}">${a.name}</a>.`)}}
+  const sus=_aiAssign();
+  const g=S.areas.find(a=>a.id===S.geoArea);const extra=[];
+  if(g&&g.done<g.need)extra.push({a:'areacanvass',t:g.id,k:'p'});
+  if(g&&S.known.blood&&S.pressure>50&&!g.screened){g.screened=true;extra.push({a:'screen',t:g.id,k:'p'})}
+  for(const c of cases)if(c.autopsy&&c.meansKey&&!c.purchChecked){c.purchChecked=true;extra.push({a:'purch',t:c.id,k:'p'})}
+  for(const u of (S.cardUses||[]))if(!u.checked&&!u.queued){u.queued=true;extra.push({a:'card',t:u.cid,k:'p'})}
+  // give extra tasks to idle detectives first, then replace the lowest priority
+  for(const t of extra){let i=S.assign.findIndex(a=>a.a==='idle');if(i<0)i=S.assign.length-1;if(i>=0&&S.dets[i]&&S.dets[i].fat<7)S.assign[i]={a:t.a,t:String(t.t)}}
+  return sus;
+}
+const _aiSus=aiSuspects0;
+function aiSuspects(smart){
+  const base=_aiSus(smart);const sc={};base.forEach((id,i)=>sc[id]=base.length-i);
+  const add=(id,n)=>{if(P[id]&&P[id].alive&&!P[id].jailed&&!evidence(id).ex.length)sc[id]=(sc[id]||0)+n};
+  const g=S.areaRes[S.geoArea];if(g)for(const id of g.residents){const p=P[id],K=S.known;if((!K.sex||p.sex===K.sex.v)&&(!K.car||(p.car||'none')===K.car.v))add(id,2)}
+  for(const id in S.pk){const k=S.pk[id];if(k.refusedScreen)add(+id,4);if(k.bought)add(+id,3);if(k.pawned)add(+id,5);if(k.tipped)add(+id,2);if(k.tamper)add(+id,6);if(k.planted&&k.planted.length&&k.trophies.length)add(+id,4)}
+  if(S.steer&&S.steer.until>=S.day)add(S.steer.id,4);
+  if(KM()&&S.kp.wealth===0)add(S.k.id,1);
+  return Object.keys(sc).map(Number).sort((a,b)=>sc[b]-sc[a]);
+}
+/* ---- killer UI (V3) ---- */
+function renderKiller(){
+  const kp=S.kp,K=S.k;
+  if(!kp.chosen){if(!UI.panelMode)$('kUI').innerHTML='<div class="card">Choose who you are to begin.</div>';return}
+  const k=P[K.id];
+  const bar=(v,col)=>`<div class="bar" style="width:100%;background:#ddd"><i style="width:${Math.min(100,v)}%;background:${col}"></i></div>`;
+  const known=Object.keys(kp.known).map(Number).filter(id=>P[id].alive);
+  const tonight=wd(S.day);
+  const opt=(v,l,sel)=>`<option value="${v}" ${sel?'selected':''}>${l}</option>`;
+  // who is reachable tonight
+  const tg=[];for(const id of known){const p=P[id];
+    for(const h of p.hangouts)if(h.days.includes(tonight)){tg.push([`${id}|place|${h.pid}`,`${fullName(p)} · at ${PL[h.pid].name}`]);tg.push([`${id}|route|${h.pid}`,`${fullName(p)} · on the way home from ${PL[h.pid].name}`])}
+    if(p.place!=null&&p.shift==='evening'&&p.workdays.includes(tonight))tg.push([`${id}|route|${p.place}`,`${fullName(p)} · on the way home from work (${PL[p.place].name})`]);
+    if(kp.observed[id]&&p.livesAlone)tg.push([`${id}|home|`,`${fullName(p)} · at home (lives alone)`]);}
+  const meansOpts=Object.entries(MEANS).filter(([key,M])=>(M.free&&(!M.needCar||k.car))||kp.means[key]).map(([key,M])=>opt(key,M.label+(kp.means[key]?` (used ${kp.means[key].uses}×${kp.means[key].bloody?', has traces':''})`:''),false)).join('');
+  const SEC={};
+  SEC.today=`<div class="card"><h2>${DAYSL[tonight]}, day ${S.day}</h2>
+    <p>Free time left: <b>${kp.hours}h</b> · Money: <b>${kp.money}</b>${kp.tired>=6?' · <b style="color:var(--red)">you are worn out</b>':''}${nightFree(S.day)?'':' · <b>you work tonight</b>'}${kp.plan?` · <b>Tonight: ${fullName(P[kp.plan.target])}</b>`:''}</p>
+    ${UI.kmsg?`<p class="life">${UI.kmsg}</p>`:''}
+    <h3>Watch (anywhere)</h3>
+    <select id="kSc">${PL.map(h=>opt(h.id,h.name+(kp.scouted[h.id]?' ✓':''))).join('')}</select> <button id="kScGo">Watch this place (3h)</button><br>
+    <select id="kWk">${DISTRICTS.map(d=>opt(d,d)).join('')}</select> <button id="kWkGo">Walk the streets, watch houses (3h)</button><br>
+    <select id="kOb">${known.slice(0,500).map(id=>opt(id,fullName(P[id])+(kp.observed[id]?' ✓':''))).join('')}</select> <button id="kObGo">Watch this person (2h)</button>
+    <h3 style="margin-top:8px">Tonight</h3>
+    ${tg.length?`<select id="kT" style="max-width:100%">${tg.map(([v,l])=>opt(v,l)).join('')}</select><br>
+    <select id="kM">${meansOpts}</select> <select id="kCare">${opt('normal','normal care')}${opt('low','low care (quick, leaves more)')}${opt('high','high care (+2h, leaves less)')}</select><br>
+    ${Object.keys(GEAR).filter(x=>kp.gear[x]).map(x=>`<label><input type="checkbox" class="kG" value="${x}" checked> ${GEAR[x].label}</label>`).join(' ')||'<span class="muted">No precautions owned.</span>'}<br>
+    <label><input type="checkbox" id="kKeep"> keep something</label> <label><input type="checkbox" id="kRob"> take valuables</label>
+    <label>Leave <select id="kSig">${opt('','no signature')}${TOKENS.map(t=>opt(t,t,kp.sig===t)).join('')}</select></label>
+    ${kp.items.length?`<label>Leave behind <select id="kLv">${opt('','nothing taken earlier')}${kp.items.map((it,i)=>opt(i,it.desc)).join('')}</select></label>`:''}<br>
+    <button class="primary" id="kGo">Plan it for tonight</button> <span class="muted" style="font-size:12px">Time needed includes travel from your home.</span>`:'<p class="muted">No one you know can be reached tonight. Watch places, streets and people to learn routines.</p>'}
+    <h3 style="margin-top:8px">Get things</h3>
+    <select id="kBuy">${[...Object.entries(MEANS).filter(([,M])=>!M.free),...Object.entries(GEAR)].map(([key,it])=>opt(key,`${it.label} (${it.cost}, ${it.obtainH}h)${kp.means[key]||kp.gear[key]?' ✓':''}`)).join('')}</select> <button id="kBuyGo">Get it</button>
+    <h3 style="margin-top:8px">Money</h3>
+    ${kp.wealth===0?'<button id="kBeg">Beg (4h)</button> ':''}<button id="kSt">Steal (2h)</button> <button id="kCard" ${kp.cards.some(c=>!c.used)?'':'disabled'}>Use a stolen card (1h)</button> <button id="kSell" ${kp.loot?'':'disabled'}>Sell stolen goods (1h)</button>
+    <h3 style="margin-top:8px">Other</h3>
+    <button id="kAl">Be seen early (2h)</button> <button id="kLow">Lie low (rest of day)</button>
+    <select id="kStW">${Object.keys(STASH).filter(x=>!(kp.wealth===0&&['home','garage','storage'].includes(x))).map(x=>opt(x,STASH[x].label,K.stash===x)).join('')}</select> <button id="kStGo">Move your things (3h)</button>
+    <p style="margin-top:10px"><button class="primary" id="kEnd" ${S.over?'disabled':''}>${TWO()?'End your turn ▸':'End the day ▸'}</button></p></div>`;
+  SEC.people=`<div class="card"><h2>People you know (${known.length})</h2><table class="res"><tr><th>Name</th><th>Age</th><th>Hair</th><th>Evenings</th><th>Lives alone?</th></tr>${known.slice(0,300).map(id=>{const p=P[id];return `<tr><td>${fullName(p)}</td><td>${p.age} ${p.sex}</td><td>${p.hair}</td><td>${p.hangouts.filter(h=>kp.scouted[h.pid]||k.hangouts.some(x=>x.pid===h.pid)||kp.observed[id]).map(h=>`${PL[h.pid].name} (${dayList(h.days)})`).join(', ')||'?'}</td><td>${kp.observed[id]?(p.livesAlone?'yes':'no'):'?'}</td></tr>`}).join('')}</table></div>`;
+  SEC.map=`<div id="kMapSlot"></div>`;
+  SEC.news=`<div class="card"><h2>News</h2><div class="log" style="max-height:none">${kp.news.slice().reverse().map(n=>`<p class="${n.big?'big':''}"><span class="muted">Day ${n.day}:</span> ${n.html}</p>`).join('')}</div></div>`;
+  SEC.life=`<div class="card"><h2>${fullName(k)}</h2>
+   <p>${k.age}, ${k.job}${k.place!=null?' at '+PL[k.place].name+` (${k.shift}, ${dayList(k.workdays)})`:''}<br>${k.household}${K.house?` (${K.house.name})`:''} · ${k.district}<br>${k.car?k.car+' car':'No car'} · Wealth: ${WEALTH[kp.wealth]} · Money: ${kp.money}</p>
+   <p><b>Urge</b> ${kp.urge}${kp.lull?' · settled for now':''}${kp.urge>=100?' · <b style="color:var(--red)">it will take over tonight</b>':''}${bar(kp.urge,'var(--red)')}</p>
+   <p><b>Tiredness</b> ${kp.tired}${bar(kp.tired*10,'#8a7a60')}</p>
+   ${K.house?`<p><b>${K.house.name} seems</b> ${K.house.susp<30?'unbothered':K.house.susp<60?'a little uneasy':K.house.susp<85?'worried':'frightened of you'}.</p>`:''}
+   <p><b>Your things are</b> ${STASH[K.stash].label}.</p>
+   <p><b>Means:</b> ${Object.keys(kp.means).map(x=>MEANS[x].label+(kp.means[x].bloody?' (traces)':'')).join(', ')||'none bought'} · <b>Precautions:</b> ${Object.keys(kp.gear).map(x=>GEAR[x].label).join(', ')||'none'}</p>
+   <p><b>Signature:</b> ${kp.sig||'none yet'}${kp.sigChanged?' (changed)':''}</p>
+   <p><b>If police ask for a blood sample:</b> <select id="kSmp">${opt('refuse','refuse',kp.sampleChoice!=='comply')}${opt('comply','give one',kp.sampleChoice==='comply')}</select><br>
+   <b>In interviews:</b> <select id="kStn">${opt('hide','keep your habits to yourself',kp.stance!=='honest')}${opt('honest','be open about where you go',kp.stance==='honest')}</select></p></div>`;
+  SEC.score=`<div class="card"><h2>Score</h2><p style="font-size:22px;font-family:'IBM Plex Mono'">${scoreNow()}</p><p class="muted" style="font-size:12px">${kp.daysFree} days free ×10 · ${kp.low} quiet days ×5 · consistency ${(consistency()*100|0)}% · ${riskCount()} risky choices</p></div>`;
+  SEC.signs=`<div class="card"><h2>What you've noticed</h2><div class="log" style="max-height:none">${kp.signs.slice().reverse().map(s=>`<p><span class="muted">Day ${s.day}:</span> ${s.txt}</p>`).join('')||'<p class="muted">Nothing unusual.</p>'}</div></div>`;
+  SEC.papers=`<div class="card"><h2>In the papers</h2><p>${S.nick?`They call you <b>${S.nick}</b>.`:'No name yet.'}</p><p>Public pressure on the police: ${S.pressure}</p></div>`;
+  // pattern
+  const tally=key=>{const t={};for(const a of kp.acts)t[a.attrs[key]]=(t[a.attrs[key]]||0)+1;return Object.entries(t).sort((a,b)=>b[1]-a[1]).map(([v,n])=>`${key==='alone'?(v==='true'?'lives alone':'lives with others'):key==='age'?v+'s':key==='sex'?(v==='F'?'women':'men'):v} ×${n}`).join(', ')||'—'};
+  SEC.pattern=`<div class="card"><h2>Your pattern</h2><p><b>Drawn to:</b> ${kp.desires.map(desText).join('; ')}</p>
+   <table class="prof">${[['Sex','sex'],['Age','age'],['Hair','hair'],['Household','alone'],['Where','kind']].map(([l,key])=>`<tr><td>${l}</td><td>${tally(key)}</td></tr>`).join('')}
+   <tr><td>Means</td><td>${(()=>{const t={};kp.acts.forEach(a=>t[a.means]=(t[a.means]||0)+1);return Object.entries(t).map(([m,n])=>`${MEANS[m].label} ×${n}`).join(', ')||'—'})()}</td></tr>
+   <tr><td>Nights</td><td>${(()=>{const t={};kp.acts.forEach(a=>t[DAYS[wd(a.day)]]=(t[DAYS[wd(a.day)]]||0)+1);return Object.entries(t).map(([m,n])=>`${m} ×${n}`).join(', ')||'—'})()}</td></tr></table>
+   <p class="muted" style="font-size:12px">Acts that match what you're drawn to settle the urge most. Consistency: ${(consistency()*100|0)}%. A consistent pattern is easier for police to see.</p></div>`;
+  // victims & items
+  SEC.items=`<div class="card"><h2>Victims and things</h2>
+   <table class="res"><tr><th>Day</th><th>Name</th><th>Where</th><th>Means</th></tr>${kp.acts.map(a=>`<tr><td>${a.day}</td><td>${a.name}</td><td>${a.where}</td><td>${MEANS[a.means].label}, ${a.care}</td></tr>`).join('')||'<tr><td colspan=4 class="muted">None.</td></tr>'}</table>
+   <h3 style="margin-top:8px">Things you have (${kp.items.length+kp.bags.length})</h3>
+   ${kp.items.map((it,i)=>`<div style="font-size:13px">• ${it.desc}</div>`).join('')}${kp.bags.map(b=>`<div style="font-size:13px">• a bag of clothes from case-night ${S.cases.find(c=>c.id===b.cid).day}</div>`).join('')}
+   ${kp.items.length+kp.bags.length+Object.keys(kp.means).length?`<h3 style="margin-top:8px">Do something with it</h3>
+   <select id="kIt">${kp.items.map((it,i)=>opt('i'+i,it.desc)).join('')}${kp.bags.map((b,i)=>opt('b'+i,'bag of clothes ('+(i+1)+')')).join('')}${Object.keys(kp.means).map(x=>opt('m'+x,MEANS[x].label)).join('')}</select><br>
+   <select id="kDs">${Object.entries(DISPOSE).map(([key,D])=>opt(key,`get rid of it: ${D.label} (${D.h}h)`)).join('')}</select> <button id="kDsGo">Do it</button><br>
+   <select id="kPt">${known.slice(0,300).map(id=>opt(id,fullName(P[id]))).join('')}</select> <select id="kPs">${opt('home','in their home')}${opt('car','in their car')}${opt('bin','in their bin')}</select> <label><input type="checkbox" id="kTip"> and phone in a tip</label> <button id="kPtGo">Plant it (2h)</button><br>
+   <select id="kSd">${opt('press','to the newspaper')}${opt('family',"to the victim's family")}</select> <label><input type="checkbox" id="kFar"> post it from another district (+2h)</label> <button id="kSdGo">Send it (2h)</button>
+   <p class="muted" style="font-size:12px">Planting and sending only work for things you took from victims. Getting rid of things: each way has its own chance of the item being found.</p>`:''}</div>`;
+  // journal
+  const J=kp.journal.slice().reverse();
+  SEC.journal=`<div class="card"><h2>Journal</h2><label><input type="checkbox" id="kJf" ${kp.journalFull?'checked':''}> Full entries</label><div class="log" style="max-height:none">${J.map(j=>`<p><span class="muted">Day ${j.day}:</span> ${kp.journalFull?j.full:j.short}</p>`).join('')||'<p class="muted">Nothing yet.</p>'}</div></div>`;
+  // station
+  if(kp.policeJob){const best=(()=>{const ls={};for(const c of S.cases)if(c.lastSeenKnown&&c.lastSeen!=null)ls[c.lastSeen]=(ls[c.lastSeen]||0)+1;const b=Object.entries(ls).sort((a,b)=>b[1]-a[1])[0];return b&&b[1]>=2?PL[b[0]].name:null})();
+    const rank=S.poi.indexOf(K.id);
+    SEC.station=`<div class="card"><h2>At the station</h2><p><b>Suspects on the board:</b> ${S.poi.filter(id=>id!==K.id).slice(0,6).map(id=>fullName(P[id])).join(', ')||'none'}${rank>=0?` · <b style="color:var(--red)">your name is on the board</b>`:''}</p>
+     <p><b>What they know:</b> ${Object.entries(S.known).filter(([k])=>k!=='token').map(([key,v])=>`${key}: ${Array.isArray(v.v)?v.v.join('–'):v.v}`).join('; ')||'little'}</p>
+     ${best?`<p><b>Talk in the canteen:</b> they want to watch ${best}.</p>`:''}
+     <h3>Steer the case (on shift days)</h3>
+     <select id="kMis">${Object.keys(S.known).filter(x=>x!=='token').map(x=>opt(x,x)).join('')}</select> <button id="kMisGo">Misplace this evidence (2h)</button><br>
+     <select id="kPoint">${known.slice(0,300).map(id=>opt(id,fullName(P[id]))).join('')}</select> <button id="kPointGo">Point colleagues at them (1h)</button>
+     <p class="muted" style="font-size:12px">Each attempt risks an internal affairs inquiry. If you become a suspect, they move fast.</p></div>`;}
+  else SEC.station=`<div class="card"><h2>At the station</h2><p class="muted">You're not a police officer.</p></div>`;
+  const tab=kp.tab;
+  const tabsL={today:'Today',people:'People',map:'Map',news:'News',pattern:'Pattern',items:'Victims & things',journal:'Journal',station:'Station'};
+  const tabs=Object.keys(tabsL).filter(t=>t!=='station'||kp.policeJob).map(t=>`<button data-ktab="${t}" class="${tab===t?'on':''}">${tabsL[t]}</button>`).join('');
+  const mp=$('mapPane');if(mp&&mp.parentElement.id!=='mapHome'&&$('mapHome'))$('mapHome').appendChild(mp);
+  if(UI.panelMode)fillPanels('killer',SEC);
+  else $('kUI').innerHTML=`<div class="col-left">${SEC.life}${SEC.score}</div><div class="col-mid"><div class="tabs">${tabs}</div>${SEC[tab]||SEC.today}</div><div class="col-right">${SEC.signs}${SEC.papers}</div>`;
+  document.querySelectorAll('[data-ktab]').forEach(b=>b.onclick=()=>{kp.tab=b.dataset.ktab;render()});
+  if((UI.panelMode&&panelOpen('killer','kmap'))||(!UI.panelMode&&tab==='map')){const mp=$('mapPane');$('kMapSlot').appendChild(mp);mp.style.display='';renderMap()}
+  const on=(id,f)=>{const e=$(id);if(e)e.onclick=f};
+  on('kScGo',()=>kScout(+$('kSc').value));on('kWkGo',()=>kWalk($('kWk').value));on('kObGo',()=>kObserve(+$('kOb').value));
+  on('kGo',()=>{const[t,mode,pid]=$('kT').value.split('|');kPlan({target:+t,mode,pid:pid===''?null:+pid,means:$('kM').value,care:$('kCare').value,gear:[...document.querySelectorAll('.kG:checked')].map(x=>x.value),keep:$('kKeep').checked,rob:$('kRob').checked,sig:$('kSig').value||null,leave:$('kLv')&&$('kLv').value!==''?+$('kLv').value:null})});
+  on('kBuyGo',()=>kBuy($('kBuy').value));on('kBeg',kBeg);on('kSt',kSteal);on('kCard',kUseCard);on('kSell',kSell);
+  on('kAl',kAlibi);on('kLow',kLieLow);on('kStGo',()=>kStash($('kStW').value));
+  on('kEnd',()=>{UI.kmsg='';if(TWO()){UI.turn='police';passScreen('Police player: your turn. The killer player looks away.')}else endDay()});
+  const itSel=()=>{const v=$('kIt').value;return{kind:v[0]==='i'?'item':v[0]==='b'?'bag':'means',idx:v[0]==='m'?v.slice(1):+v.slice(1)}};
+  on('kDsGo',()=>{const s=itSel();kDispose(s.kind,s.idx,$('kDs').value)});
+  on('kPtGo',()=>{const s=itSel();if(s.kind!=='item'){kMsg('Only things taken from victims can be planted.');return}kPlant(s.idx,+$('kPt').value,$('kPs').value,$('kTip').checked)});
+  on('kSdGo',()=>{const s=itSel();if(s.kind!=='item'){kMsg('Only things taken from victims can be sent.');return}kSend(s.idx,$('kSd').value,$('kFar').checked)});
+  if($('kJf'))$('kJf').onchange=e=>{kp.journalFull=e.target.checked;render()};
+  if($('kSmp'))$('kSmp').onchange=e=>{kp.sampleChoice=e.target.value};if($('kStn'))$('kStn').onchange=e=>{kp.stance=e.target.value};
+  on('kMisGo',()=>kStation('misplace',$('kMis').value));on('kPointGo',()=>kStation('point',+$('kPoint').value));
+}
+function kScout(pid){
+  if(!kSpend(3))return;const pl=PL[pid];S.kp.scouted[pid]=true;S.kp.seenAt[pid]=(S.kp.seenAt[pid]||0)+1;
+  const k=P[S.k.id];
+  if(S.kp.seenAt[pid]>=2&&!k.hangouts.some(h=>h.pid===pid))k.hangouts.push({pid,days:[wd(S.day)]});
+  let n=0;for(const p of P){if(!p.alive||p.id===k.id)continue;if(p.place===pid||p.hangouts.some(h=>h.pid===pid)){S.kp.known[p.id]=true;n++}}
+  jlog(`Spent three hours at ${pl.name}, watching.`);
+  kMsg(`You spent time at ${pl.name}, watching. You now recognise ${n} people who work or spend evenings there, and know their days.${S.kp.seenAt[pid]>=2?' Staff are starting to recognise you too.':''}`);
+}
+const _kObs=kObserve0;function kObserve(id){_kObs(id);jlog(`Watched ${fullName(P[id])} for a while.`)}
+
+/* ================= MOVABLE PANELS ================= */
+const GRID=20;
+const PDEF={
+ police:[
+  {id:'dept',t:'Department',el:()=>$('dets').closest('.card')},
+  {id:'log',t:'Daily log',el:()=>$('log').closest('.card')},
+  {id:'cases',t:'Case files',el:()=>$('cases')},
+  {id:'map',t:'City map',el:()=>$('mapHome')},
+  {id:'wall',t:'Evidence wall',el:()=>$('wallPane')},
+  {id:'tl',t:'Timeline',el:()=>$('tlPane')},
+  {id:'prof',t:'What we know about the killer',el:()=>$('prof').closest('.card')},
+  {id:'poi',t:'People of interest',el:()=>$('pois').closest('.card')},
+  {id:'rec',t:'City records',el:()=>$('results').closest('.card')},
+  {id:'places',t:'Pulled place records',el:()=>$('placesKnown').closest('.card')}],
+ killer:[
+  {id:'klife',t:'Who you are',sec:'life',tf:()=>fullName(P[S.k.id])},
+  {id:'kscore',t:'Score',sec:'score'},
+  {id:'ktoday',t:'Today',sec:'today',tf:()=>`Today · ${DAYSL[wd(S.day)]}, day ${S.day}`},
+  {id:'kpeople',t:'People you know',sec:'people'},
+  {id:'kmap',t:'Map',sec:'map'},
+  {id:'knews',t:'News',sec:'news'},
+  {id:'ksigns',t:"What you've noticed",sec:'signs'},
+  {id:'kpapers',t:'In the papers',sec:'papers'},
+  {id:'kpattern',t:'Your pattern',sec:'pattern'},
+  {id:'kitems',t:'Victims and things',sec:'items'},
+  {id:'kjournal',t:'Journal',sec:'journal'},
+  {id:'kstation',t:'At the station',sec:'station'}]};
+const snp=v=>Math.round(v/GRID)*GRID;
+function wsSize(){const hd=document.querySelector('header');return{W:snp(Math.max(900,document.documentElement.clientWidth-30)),H:snp(Math.max(560,window.innerHeight-(hd?hd.offsetHeight:80)-30))}}
+function defaultLayout(mode){
+  const{W,H}=wsSize(),lw=snp(W*.22),rw=snp(W*.27),mw=W-lw-rw,hm=snp(mw/2),L={};
+  const put=(id,x,y,w,h,open=true)=>L[id]={x,y,w,h,open,col:false,z:1};
+  if(mode==='police'){
+    const a=snp(H*.62),c=snp(H*.58);
+    put('dept',0,0,lw,a);put('log',0,a,lw,H-a);
+    put('cases',lw,0,mw,c);put('map',lw,c,hm,H-c);put('wall',lw+hm,c,mw-hm,H-c);put('tl',lw,0,mw,c,false);
+    const p1=snp(H*.34),p2=snp(H*.52),p3=snp(H*.82);
+    put('prof',lw+mw,0,rw,p1);put('poi',lw+mw,p1,rw,p2-p1);put('rec',lw+mw,p2,rw,p3-p2);put('places',lw+mw,p3,rw,H-p3);
+  }else{
+    const a=snp(H*.42),b=snp(H*.72),b2=snp(H*.84),c=snp(H*.64),d=snp(H*.42),e=snp(H*.66),f=snp(H*.84);
+    put('klife',0,0,lw,a);put('kpattern',0,a,lw,b-a);put('kscore',0,b,lw,b2-b);put('kpapers',0,b2,lw,H-b2);
+    put('ktoday',lw,0,mw,c);put('kjournal',lw,c,hm,H-c);put('kitems',lw+hm,c,mw-hm,H-c);
+    put('kmap',lw+mw,0,rw,d);put('knews',lw+mw,d,rw,e-d);put('ksigns',lw+mw,e,rw,f-e);put('kpeople',lw+mw,f,rw,H-f);
+    put('kstation',lw,0,mw,c,false);
+  }
+  return L;
+}
+function loadLayout(mode){
+  let L=null;try{L=JSON.parse(localStorage.getItem('gski_layout_'+mode)||'null')}catch(e){}
+  const D=defaultLayout(mode);if(!L)return D;
+  for(const k in D)if(!L[k])L[k]=D[k];
+  return L;
+}
+let layTimer=null;
+function saveLayoutSoon(mode){clearTimeout(layTimer);layTimer=setTimeout(()=>{try{localStorage.setItem('gski_layout_'+mode,JSON.stringify(UI.lay[mode]))}catch(e){}},300)}
+function wsOf(mode){return mode==='police'?$('mainG'):$('kUI')}
+function panelOpen(mode,id){return UI.panelMode&&UI.lay&&UI.lay[mode]&&UI.lay[mode][id]&&UI.lay[mode][id].open&&!UI.lay[mode][id].col}
+function ensurePanels(mode){
+  UI.built=UI.built||{};if(UI.built[mode])return;UI.built[mode]=true;
+  UI.lay=UI.lay||{};UI.lay[mode]=loadLayout(mode);
+  const ws=wsOf(mode);
+  const made=PDEF[mode].map(def=>{
+    const p=document.createElement('div');p.className='pnl';p.id='p-'+def.id;p.dataset.mode=mode;p.dataset.pid=def.id;
+    p.innerHTML=`<div class="pnl-h"><span class="pnl-t">${def.t}</span><span><button class="pb" data-act="col" title="Collapse or expand">▁</button><button class="pb" data-act="close" title="Close (reopen from Panels)">✕</button></span></div><div class="pnl-b" id="pb-${def.id}"></div><div class="pnl-r" title="Drag to resize"></div>`;
+    if(def.el){const e=def.el();if(e)p.querySelector('.pnl-b').appendChild(e)}
+    wirePanel(p);return p});
+  if(mode==='police'){ws.querySelectorAll(':scope>.col-left,:scope>.col-mid,:scope>.col-right').forEach(c=>c.style.display='none')}
+  else ws.innerHTML='';
+  ws.classList.add('ws');made.forEach(p=>ws.appendChild(p));
+  applyLayout(mode);
+}
+function applyLayout(mode){
+  for(const def of PDEF[mode]){const p=$('p-'+def.id),o=UI.lay[mode][def.id];if(!p)continue;
+    p.style.left=o.x+'px';p.style.top=o.y+'px';p.style.width=o.w+'px';p.style.height=o.col?'auto':o.h+'px';
+    p.style.display=o.open?'':'none';p.style.zIndex=o.z||1;p.classList.toggle('collapsed',!!o.col)}
+  sizeWS(mode);
+}
+function sizeWS(mode){if(!UI.panelMode||!UI.lay||!UI.lay[mode])return;const{H}=wsSize();let m=H;for(const k in UI.lay[mode]){const o=UI.lay[mode][k];if(o.open)m=Math.max(m,o.y+(o.col?40:o.h)+GRID)}wsOf(mode).style.height=m+'px'}
+function topZ(mode){return Math.max(1,...Object.values(UI.lay[mode]).map(o=>o.z||1))}
+function wirePanel(p){
+  const mode=p.dataset.mode,id=p.dataset.pid,o=()=>UI.lay[mode][id];
+  p.addEventListener('pointerdown',()=>{const z=topZ(mode);if((o().z||1)<z){o().z=z+1;p.style.zIndex=o().z;saveLayoutSoon(mode)}},true);
+  p.querySelector('[data-act=col]').onclick=()=>{o().col=!o().col;applyLayout(mode);saveLayoutSoon(mode);render()};
+  p.querySelector('[data-act=close]').onclick=()=>{o().open=false;applyLayout(mode);saveLayoutSoon(mode)};
+  const drag=(el,fn)=>{el.addEventListener('pointerdown',e=>{if(e.target.closest('.pb'))return;e.preventDefault();el.setPointerCapture(e.pointerId);
+    const sx=e.clientX,sy=e.clientY,st={...o()};
+    const mv=ev=>{fn(st,ev.clientX-sx,ev.clientY-sy);applyLayout(mode)};
+    const up=()=>{el.removeEventListener('pointermove',mv);el.removeEventListener('pointerup',up);saveLayoutSoon(mode);if(id==='map'||id==='kmap'||id==='wall')render()};
+    el.addEventListener('pointermove',mv);el.addEventListener('pointerup',up)})};
+  const{W}=wsSize();
+  drag(p.querySelector('.pnl-h'),(st,dx,dy)=>{const q=o();q.x=Math.max(0,Math.min(snp(st.x+dx),W-GRID*4));q.y=Math.max(0,snp(st.y+dy))});
+  drag(p.querySelector('.pnl-r'),(st,dx,dy)=>{const q=o();q.w=Math.max(GRID*10,snp(st.w+dx));q.h=Math.max(GRID*4,snp(st.h+dy));if(q.col)q.col=false});
+}
+function fillPanels(mode,SEC){
+  ensurePanels(mode);
+  for(const def of PDEF[mode]){if(!def.sec)continue;const b=$('pb-'+def.id);if(!b)continue;
+    if(def.tf)$('p-'+def.id).querySelector('.pnl-t').textContent=def.tf();
+    const st=b.scrollTop;b.innerHTML=SEC[def.sec];b.scrollTop=st}
+}
+function curMode(){return KM()&&!(TWO()&&UI.turn==='police')?'killer':'police'}
+function panelsMenu(){
+  let m=$('pMenu');if(m){m.remove();return}
+  const mode=curMode();ensurePanels(mode);
+  m=document.createElement('div');m.id='pMenu';
+  m.innerHTML=`<div style="font-weight:600;margin-bottom:4px">Show panels</div>`+PDEF[mode].map(d=>`<label><input type="checkbox" data-pp="${d.id}" ${UI.lay[mode][d.id].open?'checked':''}> ${d.t}</label>`).join('')+`<div class="muted" style="font-size:11px;margin-top:6px">Drag a title to move · drag the corner to resize · ▁ collapses</div>`;
+  const r=$('btnPanels').getBoundingClientRect();m.style.top=(r.bottom+window.scrollY+4)+'px';m.style.left=Math.max(8,r.left-120)+'px';
+  document.body.appendChild(m);
+  m.querySelectorAll('[data-pp]').forEach(c=>c.onchange=()=>{const o=UI.lay[mode][c.dataset.pp];o.open=c.checked;o.col=false;
+    if(c.checked){o.z=topZ(mode)+1;const{W}=wsSize();if(o.x>W-GRID*4){const D=defaultLayout(mode)[c.dataset.pp];o.x=D.x;o.y=D.y}}
+    applyLayout(mode);saveLayoutSoon(mode);render()});
+  setTimeout(()=>document.addEventListener('pointerdown',function f(e){if(!e.target.closest('#pMenu')&&e.target.id!=='btnPanels'){const x=$('pMenu');if(x)x.remove();document.removeEventListener('pointerdown',f)}}),0);
+}
+function namedLayouts(){try{return JSON.parse(localStorage.getItem('gski_layouts')||'{}')}catch(e){return null}}
+function layoutsModal(msg){
+  const mode=curMode();ensurePanels(mode);const N=namedLayouts();
+  const mine=N?Object.entries(N).filter(([,v])=>v.mode===mode):[];
+  openModal(`<h2>Layouts (${mode==='police'?'police':'killer'} screen)</h2>${msg?`<p><b>${msg}</b></p>`:''}
+  <p>Your layout is saved automatically and used in every new game.</p>
+  <h3>Save this layout as</h3><input id="lyName" placeholder="e.g. Big monitor"> <button id="lySave" ${N==null?'disabled':''}>Save</button>
+  <h3 style="margin-top:10px">Saved layouts</h3>${N==null?'<p class="muted">Browser storage is unavailable.</p>':mine.length?`<table class="res">${mine.map(([n])=>`<tr><td>${n.replace(/</g,'&lt;')}</td><td><button class="small" data-lyl="${encodeURIComponent(n)}">Use</button> <button class="small" data-lyd="${encodeURIComponent(n)}">Delete…</button></td></tr>`).join('')}</table>`:'<p class="muted">None yet.</p>'}
+  <h3 style="margin-top:10px">Move to another computer</h3>
+  <button id="lyEx">Download layout file</button> <button id="lyCp">Copy layout text</button><br>
+  <input type="file" id="lyIm" accept=".json,.txt" style="margin-top:6px"><br><textarea id="lyTx" rows="2" style="width:100%;margin-top:6px" placeholder="…or paste layout text here"></textarea><button id="lyGo">Use pasted layout</button>
+  <h3 style="margin-top:10px">Start over</h3><button id="lyRs">Reset to the default layout</button> <span id="lyMsg" class="muted"></span>`);
+  const setLay=(L)=>{UI.lay[mode]=L;applyLayout(mode);saveLayoutSoon(mode);render()};
+  $('lySave').onclick=()=>{const n=$('lyName').value.trim();if(!n){$('lyMsg').textContent='Type a name first.';return}const all=namedLayouts()||{};all[n]={mode,lay:JSON.parse(JSON.stringify(UI.lay[mode]))};try{localStorage.setItem('gski_layouts',JSON.stringify(all));layoutsModal(`Saved "${n}".`)}catch(e){$('lyMsg').textContent='Could not save.'}};
+  document.querySelectorAll('[data-lyl]').forEach(b=>b.onclick=()=>{const n=decodeURIComponent(b.dataset.lyl);setLay(JSON.parse(JSON.stringify(namedLayouts()[n].lay)));closeModal()});
+  document.querySelectorAll('[data-lyd]').forEach(b=>b.onclick=()=>{const n=decodeURIComponent(b.dataset.lyd);b.outerHTML=`<span>Delete "${n.replace(/</g,'&lt;')}"? <button class="small" id="lyYes">Yes, delete</button></span>`;$('lyYes').onclick=()=>{const all=namedLayouts();delete all[n];localStorage.setItem('gski_layouts',JSON.stringify(all));layoutsModal(`Deleted "${n}".`)}});
+  const exp=()=>JSON.stringify({v:1,police:UI.lay.police||loadLayout('police'),killer:UI.lay.killer||loadLayout('killer')});
+  $('lyEx').onclick=()=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([exp()],{type:'application/json'}));a.download='gski-layout.json';document.body.appendChild(a);a.click();a.remove();$('lyMsg').textContent='Download started (if your browser allows it).'}catch(e){$('lyMsg').textContent='Download not allowed here; use Copy.'}};
+  $('lyCp').onclick=async()=>{try{await navigator.clipboard.writeText(exp());$('lyMsg').textContent='Copied.'}catch(e){$('lyTx').value=exp();$('lyMsg').textContent='Copy blocked; the text is in the box above.'}};
+  const imp=t=>{const d=JSON.parse(t);if(d.v!==1)throw 0;for(const md of ['police','killer'])if(d[md]){try{localStorage.setItem('gski_layout_'+md,JSON.stringify(d[md]))}catch(e){}if(UI.lay[md]){UI.lay[md]=d[md];applyLayout(md)}}render();closeModal()};
+  $('lyIm').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{imp(r.result)}catch(err){$('lyMsg').textContent='Not a valid layout file.'}};r.readAsText(f)};
+  $('lyGo').onclick=()=>{try{imp($('lyTx').value)}catch(err){$('lyMsg').textContent='Not valid layout text.'}};
+  $('lyRs').onclick=()=>{setLay(defaultLayout(mode));closeModal()};
+}
+
 /* ================= MAP ================= */
 let MR=Math.random;
 let DLAY={'Northgate':[0,0],'Old Town':[1,0],'Hillcrest':[2,0],'Harbor':[0,1],'Market':[1,1],'Riverside':[2,1]};
@@ -1732,11 +2297,19 @@ function render(){
    ${S.nick?`<div style="margin-top:6px;font-size:12px">Press name: <b>${S.nick}</b></div>`:''}</div>`;
   $('bProf').onclick=hireProfiler;$('bTemp').onclick=hireTemp;document.querySelectorAll('[data-rush]').forEach(b=>b.onclick=()=>rushLab(+b.dataset.rush));
   $('btnEnd').disabled=S.over;
-  if(KM()&&!(TWO()&&UI.turn==='police')){$('mainG').style.display='none';$('kUI').style.display='grid';renderKiller();return}
-  $('mainG').style.display='';$('kUI').style.display='none';
+  if(KM()&&!(TWO()&&UI.turn==='police')){$('mainG').style.display='none';$('kUI').style.display=UI.panelMode?'block':'grid';if(UI.panelMode)ensurePanels('killer');renderKiller();sizeWS('killer');return}
+  $('mainG').style.display='';$('kUI').style.display='none';if(UI.panelMode)ensurePanels('police');
   {const mp=$('mapPane');if(mp.parentElement.id!=='mapHome')$('mapHome').appendChild(mp)}
   renderDets();renderCases();renderProfile();renderPOI();renderPlaces();renderLog();renderTutorial();
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===UI.tab));
+  if(UI.panelMode){
+    ensurePanels('police');
+    for(const id of ['cases','mapPane','wallPane','tlPane'])$(id).style.display='';
+    if(panelOpen('police','tl'))renderTimeline();
+    if(panelOpen('police','map'))renderMap();
+    if(panelOpen('police','wall'))renderWall();
+    sizeWS('police');
+  }else{
   $('cases').style.display=UI.tab==='cases'?'':'none';
   $('mapPane').style.display=UI.tab==='map'?'':'none';
   $('wallPane').style.display=UI.tab==='wall'?'':'none';
@@ -1744,6 +2317,7 @@ function render(){
   if(UI.tab==='tl')renderTimeline();
   if(UI.tab==='map')renderMap();
   if(UI.tab==='wall')renderWall();
+  }
   markPOI(document);
 }
 function markPOI(root){root.querySelectorAll('a.pl[data-p]').forEach(a=>a.classList.toggle('ispoi',S.poi.includes(+a.dataset.p)))}
@@ -1789,7 +2363,9 @@ function renderCases(){
   const cs=S.cases.filter(c=>c.foundDay<=S.day).slice().reverse();
   $('cases').innerHTML=cs.map(c=>{
     const v=P[c.vid],f=c.found,x=c.vals,ev=[];
-    ev.push(`Signature: ${S.k.token} left beside the body.${c.copyNoticed?' <b>The item differs slightly from the other scenes: possible copycat.</b>':''}`);
+    ev.push(c.nosig?'No signature item found at this scene.':`Signature: ${S.k.token} left beside the body.${c.copyNoticed?' <b>The item differs slightly from the other scenes: possible copycat.</b>':''}`);
+    if(c.leftItem)ev.push(`<b>Left at the scene:</b> ${c.leftItem.desc}, taken from an earlier victim.`);
+    if(c.robbed)ev.push('The victim\'s wallet or valuables were missing.');
     if(c.copySolved)ev.push(`<b>Solved: a copycat, ${plink(c.copy)}, was arrested.</b>`);
     if(c.autopsy)ev.push(`Autopsy done; died around ${c.time}, ${DAYSL[wd(c.day)]} night.`);
     if(c.lastSeenKnown)ev.push(c.lastSeen!=null?`Last seen leaving <b>${PL[c.lastSeen].name}</b> around 11pm.`:`Last seen walking home in ${v.district}.`);
@@ -1898,6 +2474,9 @@ function helpModal(){
   <li><b>New in V2:</b> witnesses can be wrong (each report shows a confidence level); blood goes to the lab and takes days (you can pay to rush it); detectives get tired, and improve with use; a budget pays for a profiler or temporary officers; squads (5+ detectives) take orders together.</li>
   <li><b>Digging deeper:</b> interview a victim's friends, family and coworkers; request phone records; run background checks (hometown, earlier names, old records, and others from the same town); pull old incident reports near a place; interview a suspect's household; check finances (storage units); search cars, lockers and storage units, not just homes.</li>
   <li><b>The press</b> gives the killer a name after two linked cases. At a press conference you choose what to release; released details stay public, and releasing the signature makes copycats possible. Neighbourhood patrols form after three cases.</li>
+  <li><b>Panels</b> (desktop): drag a panel by its title bar, resize from its corner, collapse with ▁, close with ✕. <b>Panels ▾</b> reopens them; <b>Layouts…</b> saves, loads, exports, imports and resets layouts.</li>
+  <li><b>Killer mode (V3):</b> watch any place, street or person; act at a place, on someone's way home, or at their home. Choose your means (free, found, or bought with money and time), precautions (gloves, mask, shoe covers, a change of clothes), and whether to keep or take things. Then deal with what's left: get rid of it (each way has its own chance of discovery), plant it on someone, leave it at a later scene, or send it. Money comes from your job, begging (if indigent), theft and robbery, and stolen cards and goods leave trails. Your background makes you drawn to certain people and places, and that can shift. A police officer killer sees inside the investigation and can steer it, at a risk. The journal tells each day in short or full form.</li>
+  <li><b>The police in killer mode</b> now see where you've been (card payments, CCTV, staff), estimate where you live from the scenes, run blood screening drives, check shop records and bank-card use, and follow up what's found. To convict you they need at least one piece of hard evidence.</li>
   <li><b>Two-player</b> (one computer): one person plays the killer, the other the police. Each day the killer player takes their turn first, then hands over; a blank screen between turns keeps each side's information private.</li>
   <li><b>Killer mode</b> (choose it when starting a new case): you play the killer and the computer runs the police. Spend each day's free time watching places and people, plan nights, choose your care level and whether to leave a signature or keep things. The urge rises daily; acts that fit your pattern settle it more. You only see what a resident would see: news, and signs that the police are close. Score = days free and quiet days, boosted by consistency and permanent risky choices. No points per victim.</li>
   <li><b>Timeline</b> shows everything that happened, oldest first, filtered by case or person. You can write notes on cases and people.</li>
@@ -1994,9 +2573,10 @@ function boot(){
   $('mClose').onclick=closeModal;$('modal').onclick=e=>{if(e.target.id==='modal')closeModal()};
   $('btnHelp').onclick=helpModal;
   $('btnSave').onclick=()=>saveModal();
+  $('btnPanels').onclick=panelsMenu;$('btnLayouts').onclick=()=>layoutsModal();
   $('btnNew').onclick=()=>setupModal(false);
 }
-if(typeof document!=='undefined'){newGame();boot();render();setupModal(true);}
+if(typeof document!=='undefined'){UI.panelMode=window.innerWidth>760;if(UI.panelMode)document.body.classList.add('pm');newGame();boot();render();setupModal(true);}
 </script>
 </body>
 </html>

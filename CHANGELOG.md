@@ -1,5 +1,26 @@
 # Changelog
 
+## V3 (11 November 2026)
+
+**Movable panels (desktop)**
+- Every area is a panel you can drag, resize (snapping to a grid), collapse or close. Case files, City map, Evidence wall and Timeline can all be open at once.
+- A Panels menu; named layouts; layout files to move layouts between computers; reset to default. Your layout is remembered between games, separately for police and killer screens. Phones keep the one-column layout.
+
+**Killer mode overhaul**
+- Go anywhere: watch any place, walk a district's streets watching houses, or watch a person. Act at a place, on someone's way home, or at their home. Travel time counts.
+- Means: free, found, or bought (costs money and time, may leave a shop record). Each takes a different time and leaves different traces.
+- Precautions: gloves, mask, shoe covers, a change of clothes.
+- Deal with what's left: get rid of means, clothes or kept items in five ways, each with its own chance of discovery; plant items on others; leave them at later scenes; send them to the press or a victim's family.
+- Wealth from indigent to wealthy, plus money: job pay, begging, theft, robbery, stolen cards and pawned goods, all with trails.
+- Police officer as a job: inside information, and steering the case at the risk of internal affairs.
+- Desires from your background that shift with what you do; a pattern panel; lists of victims and things; your stance on blood samples and interviews.
+- A journal, short or full, flat and clinical.
+
+**Computer police**
+- They see where you've been (card payments, CCTV, staff memory), profile where you live from the scenes, run blood screening drives, and check shop records and bank-card use. Found items are followed up.
+- In killer mode, a conviction needs at least one piece of hard evidence.
+- Fixes the V2 problem where a killer acting every night at random was never noticed.
+
 ## V2 (10 November 2026)
 
 **Play either side**
