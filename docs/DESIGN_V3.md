@@ -132,7 +132,63 @@ V1 (`DESIGN.md`) and V2 (`DESIGN_V2.md`) rules still apply unless changed here. 
 - New police tasks, also available to the police player: **blood screening drive in a map area**, **check shop records for the means used**, **trace use of the victim's bank cards**.
 - **Signs for you:** with public pressure over 50, a 30% chance each day of noticing more police around your district.
 
-## 4. Other changes
+## 4. Opponent skill (added to V3)
+
+Set on the new-case screen for whichever side the computer plays. Two-player uses a handicap instead (below). Your last choices are remembered. **Difficulty now only sets how fast public pressure rises** (Easy +1, Normal +2, Hard +3 a day), and moves the opponent slider to a suggested level (Easy → level 2 of 5, Normal → 3, Hard → 4). The tutorial uses level 2.
+
+### The computer police (killer mode)
+
+| Level | Detective skill | Tactics | Force size | Forensic luck |
+|---|---|---|---|---|
+| Rookie | basic (−1 to every skill) | basic | ×0.5 | ×0.7 |
+| Average | trained (as listed) | thorough | ×1 | ×0.9 |
+| Experienced | trained | thorough | ×1 | ×1 |
+| Elite | skilled (+1) | sharp | ×1.5 | ×1.15 |
+| Relentless | expert (+2) | sharp | ×2 | ×1.3 |
+
+- **Detective skill** shifts every detective's skills (1–4).
+- **Tactics:**
+  - basic: no phone records, background checks, finances, trait searches or tails
+  - thorough: all of those
+  - sharp: also stakes out predicted places more aggressively and works more suspects at once
+  - Tactics also decides what they release at press conferences.
+- **Force size** multiplies the usual 1 detective per 500 people (1–20 detectives).
+- **Forensic luck** multiplies their chance of finding traces at scenes, at autopsies and when canvassing (at most 97%).
+- Advanced sliders: skill 1–4, tactics 0–2, force ×0.5–×2, luck ×0.6–×1.4.
+
+### The computer killer (police mode)
+
+| Level | Care (traces left) | Cunning (spots surveillance) | Restraint (first gap) | Cover (alibis break) |
+|---|---|---|---|---|
+| Sloppy | ×1.4 | 30% | 4 days | ×1.3 |
+| Average | ×1.15 | 45% | 5 days | ×1.15 |
+| Careful | ×1 | 60% | 6 days | ×1 |
+| Meticulous | ×0.8 | 75% | 7 days | ×0.8 |
+| Mastermind | ×0.6 | 90% | 9 days | ×0.6 |
+
+- **Care** multiplies every trace left at a scene.
+- **Cunning** is the chance of spotting a stakeout (and 85% of it for a tail). It also makes the killer react sooner to police pressure.
+- **Restraint** is the first gap between killings. The gap shrinks by 1 day after each killing, down to 2 days (3 at restraint 7 or more).
+- **Cover** multiplies how often alibis are contradicted and how fast the household grows suspicious.
+- Advanced sliders: care ×0.6–×1.4, cunning 30–90%, restraint 4–9 days, cover ×0.6–×1.3.
+
+In killer mode, how careful *you* are is entirely your own choice: difficulty no longer changes your traces.
+
+### Two-player handicap
+
+A balance slider, with an Advanced section. Moving the balance slider resets the advanced settings.
+
+| Balance | Police detective skill | Police force size | Police forensic luck | Killer traces left | Killer free hours | Killer starting money |
+|---|---|---|---|---|---|---|
+| Big help to police | skilled (+1) | ×1.5 | ×1.2 | ×1.3 | −2 | ×0.5 |
+| Some help to police | trained | ×1.25 | ×1.1 | ×1.15 | −1 | ×0.75 |
+| Even | trained | ×1 | ×1 | ×1 | 0 | ×1 |
+| Some help to killer | trained | ×0.75 | ×0.9 | ×0.85 | +1 | ×1.5 |
+| Big help to killer | basic (−1) | ×0.5 | ×0.8 | ×0.7 | +2 | ×2 |
+
+Advanced ranges: detective skill 1–4, force ×0.5–×2, luck ×0.6–×1.4, traces ×0.6–×1.4, free hours −3 to +3, starting money ×0.25–×3.
+
+## 5. Other changes
 
 - The press nickname in killer mode uses the district (or "Night") when you leave no signature.
 - Case files show when no signature item was found, when an earlier victim's item was left at a scene, and when valuables were taken.

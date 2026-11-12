@@ -16,6 +16,11 @@
 - Desires from your background that shift with what you do; a pattern panel; lists of victims and things; your stance on blood samples and interviews.
 - A journal, short or full, flat and clinical.
 
+**Opponent skill**
+- New-case setting for the computer opponent. Computer police: Rookie to Relentless, with advanced sliders for detective skill, tactics, force size and forensic luck. Computer killer: Sloppy to Mastermind, with advanced sliders for care, cunning, restraint and cover. Choices are remembered.
+- Two-player handicap: a balance slider from "Big help to police" to "Big help to killer", with advanced settings for each side (police detective skill, force size and forensic luck; the killer's traces, free hours and starting money).
+- Difficulty now only sets how fast public pressure rises.
+
 **Computer police**
 - They see where you've been (card payments, CCTV, staff memory), profile where you live from the scenes, run blood screening drives, and check shop records and bank-card use. Found items are followed up.
 - In killer mode, a conviction needs at least one piece of hard evidence.

@@ -199,7 +199,7 @@ const DISTRICTS_ALL=['Northgate','Harbor','Old Town','Riverside','Hillcrest','Ma
 let DISTRICTS=DISTRICTS_ALL.slice();
 const DLAYS={1:{'Old Town':[0,0]},2:{'Old Town':[0,0],'Riverside':[1,0]},4:{'Northgate':[0,0],'Old Town':[1,0],'Harbor':[0,1],'Riverside':[1,1]},6:{'Northgate':[0,0],'Old Town':[1,0],'Hillcrest':[2,0],'Harbor':[0,1],'Market':[1,1],'Riverside':[2,1]}};
 let MAPW=900,MAPH=600;
-const DIFF={easy:{label:'Easy',press:1,trace:1.15,cool:7,skill:1},normal:{label:'Normal',press:2,trace:1,cool:6,skill:0},hard:{label:'Hard',press:3,trace:.85,cool:5,skill:-1}};
+const DIFF={easy:{label:'Easy',press:1,sug:1},normal:{label:'Normal',press:2,sug:2},hard:{label:'Hard',press:3,sug:3}};
 const STREETS=['Elm','Maple','Station','Mill','Church','Bridge','Cedar','King','Queen','Water','High','Orchard','Victoria','Canal','Albert','Chapel','Market','Willow','Ash','Birch','Granary','Foundry','Lark','Heron'];
 const ADJ=['Red','Golden','Silver','Black','Old','Crooked','Lucky','Royal','Green','White','Jolly','Drowsy'];
 const NOUN=['Lion','Stag','Lantern','Barrel','Fox','Crown','Owl','Kettle','Raven','Plough','Swan','Badger','Bell','Hare'];
@@ -222,6 +222,23 @@ const GEN=[
  ['hospital',0,[['Nurse','day',4],['Nurse','night',3],['Carer','day',2]],()=>`${pick(STREETS)} Clinic`,2],
  ['transport',0,[['Driver','day',4],['Driver','night',2]],()=>`${pick(STREETS)} Cabs`,3]
 ];
+const OPP={
+ police:{names:['Rookie','Average','Experienced','Elite','Relentless'],
+   presets:[{skill:1,tactics:0,force:.5,luck:.7},{skill:2,tactics:1,force:1,luck:.9},{skill:2,tactics:1,force:1,luck:1},{skill:3,tactics:2,force:1.5,luck:1.15},{skill:4,tactics:2,force:2,luck:1.3}],
+   adv:[['skill','Detective skill',1,4,1,v=>['','basic','trained','skilled','expert'][v]],['tactics','Tactics',0,2,1,v=>['basic','thorough','sharp'][v]],['force','Force size',.5,2,.25,v=>'×'+v],['luck','Forensic luck',.6,1.4,.05,v=>'×'+(+v).toFixed(2)]]},
+ killer:{names:['Sloppy','Average','Careful','Meticulous','Mastermind'],
+   presets:[{care:1.4,cunning:.3,restraint:4,cover:1.3},{care:1.15,cunning:.45,restraint:5,cover:1.15},{care:1,cunning:.6,restraint:6,cover:1},{care:.8,cunning:.75,restraint:7,cover:.8},{care:.6,cunning:.9,restraint:9,cover:.6}],
+   adv:[['care','Care (traces left)',.6,1.4,.05,v=>'×'+(+v).toFixed(2)+' traces'],['cunning','Cunning',.3,.9,.05,v=>Math.round(v*100)+'% spots surveillance'],['restraint','Restraint',4,9,1,v=>v+' days at first'],['cover','Cover',.6,1.3,.05,v=>'×'+(+v).toFixed(2)+' alibis break']]}};
+const HC={names:['Big help to police','Some help to police','Even','Some help to killer','Big help to killer'],
+ presets:[{police:{skill:3,force:1.5,luck:1.2},killer:{traces:1.3,hours:-2,money:.5}},{police:{skill:2,force:1.25,luck:1.1},killer:{traces:1.15,hours:-1,money:.75}},{police:{skill:2,force:1,luck:1},killer:{traces:1,hours:0,money:1}},{police:{skill:2,force:.75,luck:.9},killer:{traces:.85,hours:1,money:1.5}},{police:{skill:1,force:.5,luck:.8},killer:{traces:.7,hours:2,money:2}}],
+ adv:[['police','skill','Police: detective skill',1,4,1,v=>['','basic','trained','skilled','expert'][v]],['police','force','Police: force size',.5,2,.25,v=>'×'+v],['police','luck','Police: forensic luck',.6,1.4,.05,v=>'×'+(+v).toFixed(2)],
+      ['killer','traces','Killer: traces left',.6,1.4,.05,v=>'×'+(+v).toFixed(2)],['killer','hours','Killer: free hours a day',-3,3,1,v=>(v>0?'+':'')+v],['killer','money','Killer: starting money',.25,3,.25,v=>'×'+v]]};
+function hcDefault(){return{bal:2,...JSON.parse(JSON.stringify(HC.presets[2]))}}
+function polSet(){return S.cfg.mode==='two'?(S.cfg.hc||hcDefault()).police:OP_()}
+function kSet(){return S.cfg.mode==='two'?(S.cfg.hc||hcDefault()).killer:{traces:1,hours:0,money:1}}
+function oppDefault(){return{police:{lvl:2,...OPP.police.presets[2]},killer:{lvl:2,...OPP.killer.presets[2]}}}
+function OK_(){return (S.cfg.opp&&S.cfg.opp.killer)||OPP.killer.presets[2]}
+function OP_(){return (S.cfg.opp&&S.cfg.opp.police)||OPP.police.presets[2]}
 const HUNT_KINDS=['bar','diner','gym','laundromat','park','cinema','bowling','library','cafe'];
 const DET_FIRST=['Ruth','Sam','Lena','Marco','Ava','Ben','Cora','Dev','Elif','Finn','Gus','Hana','Ike','Jo','Kai','Lou','Mae','Ned','Oona','Pip','Ray','Sia','Ty','Vic'];
 const TOWNS=['Ashford','Millbrook','Carrow','Dunmore','Elmstead','Fairhaven','Glenrock','Halden','Kestwick','Lowmoor','Marston','Northby','Oakhurst','Pellam','Quarry Hill','Rydal','Selby','Thornwick','Upton','Wexley'];
@@ -307,8 +324,7 @@ function genDetectives(pop,diff){
     if(i<DETS0.length)d={...DETS0[i]};
     else{let nm;do{nm=`Det. ${pick(DET_FIRST)} ${pick(LAST)}`}while(used.has(nm));used.add(nm);
       const spec=pick(['f','p','s']);d={name:nm,f:ri(1,2),p:ri(1,2),s:ri(1,2)};d[spec]=3}
-    const m=DIFF[diff].skill;
-    for(const k of ['f','p','s']){if(m>0&&d[k]<3)d[k]=Math.min(3,d[k]+m);if(m<0)d[k]=Math.max(1,d[k]+m)}
+    if(S&&S.cfg&&(S.cfg.mode==='killer'||S.cfg.mode==='two')){const m=polSet().skill-2;for(const k of ['f','p','s'])d[k]=Math.max(1,Math.min(4,d[k]+m))}
     if(n===1)d.name='Sgt. Ruth Okafor (village officer)';
     d.base={f:d.f,p:d.p,s:d.s};d.xp={f:0,p:0,s:0};d.fat=0;d.squad='';
     out.push(d);
@@ -483,7 +499,7 @@ function genKiller(){
       else{if(p.hangouts.length>=2)p.hangouts.pop();p.hangouts.push({pid:g.pid,days:days.sort()})}
     }
   }
-  S.k={id:k.id,pref,grounds,active:0,token:pick(TOKENS),method:pick(METHODS),heat:0,next:0,cool:DIFF[S.cfg.diff].cool,kills:0,lowDone:false};
+  S.k={id:k.id,pref,grounds,active:0,token:pick(TOKENS),method:pick(METHODS),heat:0,next:0,cool:OK_().restraint,kills:0,lowDone:false};
   if(k.home==='here')k.home=pick(TOWNS);
   S.k.origin=genOrigin(k);
   const rel=/partner/.test(k.household)?'partner':/roommate/.test(k.household)?'roommate':/parent/.test(k.household)?'parent':'family member';
@@ -500,7 +516,8 @@ function newGame(seed,cfg){
   seed=seed||Math.floor(Math.random()*1e9);
   cfg={...CFG,...(cfg||{})};CFG=cfg;
   R=mulberry32(seed);
-  const dets=(cfg.career&&rosterDets(Math.max(1,Math.min(20,Math.round(cfg.pop/500))),cfg.diff))||genDetectives(cfg.pop,cfg.diff);
+  S={cfg};
+  const dets=(cfg.mode==='killer'||cfg.mode==='two')?genDetectives(cfg.pop*polSet().force,cfg.diff):((cfg.career&&cfg.mode!=='two'&&rosterDets(Math.max(1,Math.min(20,Math.round(cfg.pop/500))),cfg.diff))||genDetectives(cfg.pop,cfg.diff));
   S={seed,cfg,dets,day:1,pressure:20,cases:[],pk:{},poi:[],log:[],known:{},assign:dets.map(()=>({a:'idle',t:''})),
      placesPulled:{},lastPress:-9,over:false,wrongful:null,stakeouts:[],tails:[],warned:{},areas:[],areaRes:{},wall:{},
      lab:[],budget:40+10*dets.length,wit:{},fear:{},notes:{},released:{},cold:[],coldSeen:{},vig:false,nick:null,failedCharges:0,profiled:false};
@@ -534,20 +551,20 @@ function commitKill(d,g,force){
   const place=PL[g.pid];
   const scene=(v.livesAlone&&chance(.45))?`at ${his(v)} home in ${v.district}`:`${pick(['in an alley off','on a footpath near','in the car park behind','in a service lane beside'])} ${place.name}, ${place.district}`;
   const cs={id:S.cases.length+1,vid:v.id,day:d,foundDay:d+1,ground:g.pid,lastSeen,scene,time:`${String(hh).padStart(2,'0')}:${mm}`,
-    tr:(()=>{const m=DIFF[S.cfg.diff].trace;return{shoe:chance(.6*m),blood:!gloves&&chance(.45*m),hair:chance(.45*m),height:chance(.7*m),sex:chance(.45*m),car:!!k.car&&chance(.4*m),friend:chance(.35*m)}})(),
+    tr:(()=>{const m=OK_().care;return{shoe:chance(.6*m),blood:!gloves&&chance(.45*m),hair:chance(.45*m),height:chance(.7*m),sex:chance(.45*m),car:!!k.car&&chance(.4*m),friend:chance(.35*m)}})(),
     found:{},vals:{},autopsy:false,canvass:0,exams:0,trophy:pick(TROPHIES),lastSeenKnown:false,circle:makeCircle(v),circleDone:0,kcontact:chance(.25)};
-  if(!force&&K.house)K.house.susp+=12;
+  if(!force&&K.house)K.house.susp+=Math.round(12*OK_().cover);
   if(scene.startsWith('at ')){cs.x=v.hx;cs.y=v.hy}else{cs.x=place.x+(MR()*50-25);cs.y=place.y+(MR()*50-25)}
   S.cases.push(cs);
   K.kills++;
-  K.next=d+K.cool;K.cool=Math.max(2,K.cool-1);
-  if(K.heat>=60&&!force){K.active=1-K.active;K.heat-=15}
+  K.next=d+K.cool;K.cool=Math.max(OK_().restraint>=7?3:2,K.cool-1);
+  if(K.heat*(.5+OK_().cunning)>=60*1.1&&!force){K.active=1-K.active;K.heat-=15}
   return v;
 }
 function killerNight(d){
   const K=S.k;if(S.over)return;
   const w=wd(d);
-  if(K.heat>=80&&!K.lowDone){K.next=Math.max(K.next,d+4);K.lowDone=true;K.heat-=20}
+  if(K.heat*(.5+OK_().cunning)>=80*1.1&&!K.lowDone){K.next=Math.max(K.next,d+4);K.lowDone=true;K.heat-=20}
   if(d<K.next)return;
   const g=K.grounds[K.active];
   if(!g.days.includes(w))return;
@@ -556,7 +573,7 @@ function killerNight(d){
   if(tl){
     const kp=P[K.id];
     if(chance(.1+.15*tl.s)){caught(tl,d,g);return}
-    if(chance(.5)){K.heat+=25;K.next=d+2;if(K.heat>=50)K.active=1-K.active;
+    if(chance(OK_().cunning*.85)){K.heat+=25;K.next=d+2;if(K.heat>=50)K.active=1-K.active;
       addLog(`${tl.det} tailed ${plink(K.id)} to ${PL[g.pid].name}. Around midnight ${he(kp)} seemed to notice the car behind and drove straight home.`);return}
     addLog(`${tl.det} tailed ${plink(K.id)} to ${PL[g.pid].name} but lost ${kp.sex==='F'?'her':'him'} in the late crowd around 11pm.`);
   }
@@ -564,7 +581,7 @@ function killerNight(d){
   if(so.length){
     const best=so.reduce((a,b)=>a.s>b.s?a:b);
     if(chance(.2+.2*best.s)){caught(best,d,g);return}
-    if(chance(.6)){
+    if(chance(OK_().cunning)){
       K.heat+=25;K.next=d+2;if(K.heat>=50)K.active=1-K.active;
       addLog(`${best.det} reports a car slowing near ${PL[g.pid].name} around midnight, then driving off. Nothing else.`);
       return;
@@ -601,6 +618,7 @@ function doAction(i,det){
   if(as.t===''||as.t==null){addLog(`${nm} had no target and did paperwork.`);return}
   const lvl=effSkill(det,A.sk||'p'),ch=sk(lvl);
   if(EXTRA[as.a]){EXTRA[as.a](as,det,ch,lvl);return}
+  const luckCh=(A.t==='case'&&(AIP()||TWO()))?Math.min(.97,ch*polSet().luck):ch;
   const K=S.k,k=P[K.id];
   const fearM=1+Math.min(.3,(S.fear[k.district]||0)*.05);
   if(A.t==='case'){
@@ -608,13 +626,14 @@ function doAction(i,det){
     const c=S.cases.find(x=>x.id==tid);if(!c){addLog(`${nm} had no case to work.`);return}
     const v=P[c.vid];
     const src=c.copy!=null?P[c.copy]:k; // whose traces are at this scene
+    const ch2=luckCh;
     if(as.a==='exam'){
       const age=S.day-c.foundDay,stale=age>staleDays(),mult=stale?.5:1;c.exams++;
       const got=[];
       const put=(key,val,txt)=>{c.vals[key]=val;got.push(txt);if(c.copy==null)knowTrait(key,val,`Case #${c.id}`);else got.push(`<i>(kept separate: this scene may not be linked)</i>`)};
-      if(c.tr.shoe&&!c.found.shoe&&chance(ch*mult)){c.found.shoe=1;put('shoe',src.shoe,`a clear shoe print, US size <b>${src.shoe}</b>`)}
-      if(c.tr.blood&&!c.found.blood&&chance(ch*mult*.8)){c.found.blood=1;got.push(`a blood trace that isn't the victim's (sent to the lab)`);labQueue({type:'blood',cid:c.id,val:src.blood})}
-      if(c.tr.hair&&!c.found.hair&&chance(ch*mult)){c.found.hair=1;put('hair',src.hair,`a foreign hair, <b>${src.hair}</b>`)}
+      if(c.tr.shoe&&!c.found.shoe&&chance(ch2*mult)){c.found.shoe=1;put('shoe',src.shoe,`a clear shoe print, US size <b>${src.shoe}</b>`)}
+      if(c.tr.blood&&!c.found.blood&&chance(ch2*mult*.8)){c.found.blood=1;got.push(`a blood trace that isn't the victim's (sent to the lab)`);labQueue({type:'blood',cid:c.id,val:src.blood})}
+      if(c.tr.hair&&!c.found.hair&&chance(ch2*mult)){c.found.hair=1;put('hair',src.hair,`a foreign hair, <b>${src.hair}</b>`)}
       if(c.copy!=null&&!c.copyNoticed&&chance(ch*.6)){c.copyNoticed=true;got.push(`<b>the signature item is slightly different from the others. Possible copycat.</b>`)}
       if(got.length)gain(det,'f');
       addLog(`${nm} examined the scene of case #${c.id}: `+(got.length?got.join('; ')+'.':(stale?'the scene has been disturbed by time and weather; nothing new.':'nothing new found.')));
@@ -622,7 +641,7 @@ function doAction(i,det){
       if(c.autopsy){addLog(`${nm} went to the morgue, but case #${c.id}'s autopsy was already done.`);return}
       c.autopsy=true;gain(det,'f');
       let t=`${nm} attended the autopsy for case #${c.id}: cause of death ${c.methodLabel||(c.copy!=null?pick(METHODS.filter(m=>m!==K.method)):K.method)}; died around ${c.time} on ${DAYSL[wd(c.day)]} night.`;
-      if(c.tr.height&&chance(ch+.1)){
+      if(c.tr.height&&chance(ch2+.1)){
         const hi=src.height+ri(2,5),lo=src.height-4-ri(0,2);
         c.found.height=1;c.vals.height=[lo,hi];t+=` Wound angle suggests an attacker <b>${lo}–${hi} cm</b> tall.`;
         if(c.copy==null)mergeHeight(lo,hi,`Case #${c.id} autopsy`);
@@ -634,8 +653,8 @@ function doAction(i,det){
         c.lastSeenKnown=true;
         got.push(c.lastSeen!=null?`${v.first} was last seen leaving <b>${PL[c.lastSeen].name}</b> around 11pm`:`${v.first} was last seen walking home in ${v.district}`);
       }
-      if(c.tr.sex&&!c.found.sex&&chance(ch*m)){c.found.sex=1;const r=wit('sex',src.sex,`Case #${c.id} neighbour`,.75,c);got.push(`a neighbour saw a <b>${r.v==='F'?'woman':'man'}</b> nearby around ${c.time} <span class="muted">(${r.conf} confidence)</span>`)}
-      if(c.tr.car&&!c.found.car&&chance(ch*m)){c.found.car=1;const r=wit('car',src.car,`Case #${c.id} witness`,.75,c);got.push(`a <b>${r.v}</b> car was seen parked nearby with its engine running <span class="muted">(${r.conf} confidence)</span>`)}
+      if(c.tr.sex&&!c.found.sex&&chance(ch2*m)){c.found.sex=1;const r=wit('sex',src.sex,`Case #${c.id} neighbour`,.75,c);got.push(`a neighbour saw a <b>${r.v==='F'?'woman':'man'}</b> nearby around ${c.time} <span class="muted">(${r.conf} confidence)</span>`)}
+      if(c.tr.car&&!c.found.car&&chance(ch2*m)){c.found.car=1;const r=wit('car',src.car,`Case #${c.id} witness`,.75,c);got.push(`a <b>${r.v}</b> car was seen parked nearby with its engine running <span class="muted">(${r.conf} confidence)</span>`)}
       if(got.length)gain(det,'p');
       addLog(`${nm} canvassed for case #${c.id}: `+(got.length?got.join('; ')+'.':'no one saw anything useful.'));
     }else if(as.a==='circle'){
@@ -731,10 +750,10 @@ function alibiFor(p,c,lvl){
   if(p.id===S.k.id){
     if(c.alibiHelp)return{st:'weak',txt:'Seen early in the evening by several people; later, says home.'};
     if(p.livesAlone){
-      if(chance(.3+.15*lvl))return{st:'contradicted',txt:p.car?`Says home asleep, but a neighbour saw ${his(p)} ${p.car} car leave around midnight.`:`Says home asleep, but a neighbour heard ${his(p)} door around midnight.`};
+      if(chance((.3+.15*lvl)*(KM()?1:OK_().cover)))return{st:'contradicted',txt:p.car?`Says home asleep, but a neighbour saw ${his(p)} ${p.car} car leave around midnight.`:`Says home asleep, but a neighbour heard ${his(p)} door around midnight.`};
       return{st:'unverified',txt:'Says home alone. No one can confirm.'};
     }
-    if(chance(.5+.15*lvl))return{st:'contradicted',txt:`Says home, but ${his(p)} partner admits ${he(p)} went out late and came back after 3am.`};
+    if(chance((.5+.15*lvl)*(KM()?1:OK_().cover)))return{st:'contradicted',txt:`Says home, but ${his(p)} partner admits ${he(p)} went out late and came back after 3am.`};
     return{st:'weak',txt:'Partner, hesitantly, says they were home.'};
   }
   if(p.shift==='night'&&p.workdays.includes(w))return{st:'confirmed',txt:`On night shift at ${PL[p.place].name}. Timesheet confirms.`};
@@ -810,7 +829,7 @@ function arrest(id){
 /* ================= DAY CYCLE ================= */
 function endDay(){
   if(S.over)return;
-  if(KM()){if(!S.kp.chosen)return;if(AIP()){if(S.pressure>60&&S.day-S.lastPress>=3)pressConf(S.cfg.diff==='easy'?[]:['sighting']);aiAssign()}}
+  if(KM()){if(!S.kp.chosen)return;if(AIP()){if(S.pressure>60&&S.day-S.lastPress>=3)pressConf(OP_().tactics===0?[]:['sighting']);aiAssign()}}
   S.stakeouts=[];S.tails=[];
   S.dets.forEach((d,i)=>doAction(i,d));
   if(KM())killerSigns();
@@ -1124,7 +1143,7 @@ function worldNight(d){
     const cc=pick(P.filter(p=>p.alive&&!p.jailed&&p.id!==K.id&&p.age>=20&&p.age<=60));
     const v=pick(P.filter(p=>p.alive&&p.id!==cc.id&&p.id!==K.id&&p.district===cc.district));
     if(v){v.alive=false;S.lastCopy=d;
-      const m=DIFF[S.cfg.diff].trace;
+      const m=1;
       const cs={id:S.cases.length+1,vid:v.id,day:d,foundDay:d+1,ground:null,lastSeen:null,scene:`at ${his(v)} home in ${v.district}`,time:`${String(ri(22,25)%24).padStart(2,'0')}:${pick(['10','35','55'])}`,
         tr:{shoe:chance(.7*m),blood:chance(.5*m),hair:chance(.5*m),height:chance(.6*m),sex:chance(.4*m),car:!!cc.car&&chance(.4*m),friend:false},found:{},vals:{},autopsy:false,canvass:0,exams:0,trophy:pick(TROPHIES),lastSeenKnown:false,copy:cc.id,x:v.hx,y:v.hy,circle:[],circleDone:0};
       cs.circle=makeCircle(v);S.cases.push(cs);
@@ -1161,7 +1180,7 @@ function rosterDets(n,diff){
   while(act.length<n){let nm;do{nm=`Det. ${pick(DET_FIRST)} ${pick(LAST)}`}while(r.some(x=>x.name===nm));
     const rec={rid:Math.max(0,...r.map(x=>x.rid))+1,name:nm,f:1,p:1,s:1,xp:{f:0,p:0,s:0},cases:0,solved:0,days:0,burn:0,retired:false};rec[pick(['f','p','s'])]=2;r.push(rec);act.push(rec)}
   saveRoster(r);
-  const m=DIFF[diff].skill;
+  const m=0;
   return act.slice(0,n).map(x=>{const d={name:x.name,rid:x.rid,base:{f:x.f,p:x.p,s:x.s},xp:{...x.xp},fat:0,squad:''};
     for(const k of ['f','p','s'])d[k]=Math.max(1,Math.min(4,x[k]+(m>0&&x[k]<3?m:m<0?m:0)));
     if(n===1)d.name=d.name.replace(/^Det\./,'Sgt.')+' (village officer)';return d});
@@ -1404,7 +1423,7 @@ function aiSuspects0(smart){
   return Object.keys(sc).map(Number).map(id=>({id,s:sc[id]+evidence(id).score*2,ex:evidence(id).ex.length})).filter(x=>!x.ex).sort((a,b)=>b.s-a.s).map(x=>x.id);
 }
 function aiAssign0(){
-  const smart={easy:0,normal:1,hard:2}[S.cfg.diff];
+  const smart=OP_().tactics;
   const cases=S.cases.filter(c=>c.foundDay<=S.day&&!c.copySolved);const q=[];
   for(const c of cases.slice().reverse()){
     if(!c.autopsy)q.push({a:'autopsy',t:c.id,k:'f'});
@@ -1573,7 +1592,7 @@ function setPlayerKiller(id,wl){
   if(w===0){p.car=null;p.household='Sleeps at a night shelter';p.livesAlone=true}
   if(w===4&&!p.car)p.car=pick(['black','silver','grey','white']);
   _setPK(id);
-  const kp=S.kp;kp.wealth=w;kp.money=START_MONEY[w];kp.desires=genDesires();
+  const kp=S.kp;kp.wealth=w;kp.money=Math.round(START_MONEY[w]*kSet().money);kp.desires=genDesires();
   kp.policeJob=/Police officer/.test(p.job||'');
   if(kp.policeJob){p.workdays=shuffle([0,1,2,3,4,5,6]).slice(0,5).sort()}
   if(w===0)S.k.stash='outside';
@@ -1587,6 +1606,7 @@ function freeHours(d){
   if(kp&&kp.policeJob&&k.workdays.includes(w))h-=2;
   if(kp&&kp.wealth===4)h+=2;
   if(kp&&kp.tired>=6)h-=2;
+  if(kp)h+=kSet().hours;
   return Math.max(1,h);
 }
 function travelH(x,y){const k=P[S.k.id];const d=Math.hypot(k.hx-x,k.hy-y);return Math.ceil(d/(k.car?360:S.kp.wealth>=3?240:150))}
@@ -1682,7 +1702,7 @@ function playerNight(d){
   if(pl){const so=S.stakeouts.filter(x=>x.pid==plan.pid);if(so.length){const b=so.reduce((a,c)=>a.s>c.s?a:c);if(chance(.2+.2*b.s)){caughtK(b.det);return}if(chance(.6)){K.heat+=25;kp.result=`An unmarked car sat outside ${pl.name} all night. You left.`;sign(`An unmarked car sat outside ${pl.name}.`);jlog(`Police outside ${pl.name}. Left.`);return}}}
   // the act
   const M=MEANS[plan.means],g=new Set(plan.gear);kp.lastGloves=g.has('gloves');
-  let m=DIFF[S.cfg.diff].trace*(plan.care==='low'?1.4:plan.care==='high'?.55:1)*(kp.tired>=6?1.2:1);
+  let m=kSet().traces*(plan.care==='low'?1.4:plan.care==='high'?.55:1)*(kp.tired>=6?1.2:1);
   const mod=key=>{let v=m;const mm=M.mods||{shoe:.6+MR(),hair:.6+MR(),blood:.6+MR(),sex:.6+MR(),car:.6+MR()};if(mm[key]!=null)v*=mm[key];
     if(key==='blood'&&g.has('gloves'))v*=.25;if(key==='shoe'&&g.has('covers'))v*=.15;if(key==='hair'&&g.has('clothes'))v*=.5;if(key==='sex'&&g.has('mask'))v*=.6;return v};
   t.alive=false;
@@ -2284,7 +2304,7 @@ const $=id=>document.getElementById(id);
 function plink(id){const p=P[id];return `<a class="pl${p.alive?'':' dead'}" data-p="${id}">${fullName(p)}</a>`}
 function addLog(html,big){S.log.push({day:S.day,html,big:!!big})}
 function render(){
-  $('seed').textContent=S.seed;$('cfgInfo').textContent=`${S.cfg.pop.toLocaleString()} people · ${S.dets.length} detective${S.dets.length>1?'s':''} · ${DIFF[S.cfg.diff].label}`;
+  $('seed').textContent=S.seed;$('cfgInfo').textContent=`${S.cfg.pop.toLocaleString()} people · ${S.dets.length} detective${S.dets.length>1?'s':''} · ${S.cfg.mode==='two'?'Handicap: '+HC.names[(S.cfg.hc||hcDefault()).bal]+' · ':S.cfg.mode==='killer'?'Police: '+OPP.police.names[(S.cfg.opp||oppDefault()).police.lvl]+' · ':S.cfg.mode==='police'?'Killer: '+OPP.killer.names[(S.cfg.opp||oppDefault()).killer.lvl]+' · ':''}${DIFF[S.cfg.diff].label}`;
   $('dayN').textContent=S.day;$('dayW').textContent=DAYS[wd(S.day)];
   $('vicN').textContent=S.cases.filter(c=>c.foundDay<=S.day).length;
   const pr=Math.min(100,S.pressure);$('presN').textContent=pr;$('presBar').style.width=pr+'%';
@@ -2477,6 +2497,8 @@ function helpModal(){
   <li><b>Panels</b> (desktop): drag a panel by its title bar, resize from its corner, collapse with ▁, close with ✕. <b>Panels ▾</b> reopens them; <b>Layouts…</b> saves, loads, exports, imports and resets layouts.</li>
   <li><b>Killer mode (V3):</b> watch any place, street or person; act at a place, on someone's way home, or at their home. Choose your means (free, found, or bought with money and time), precautions (gloves, mask, shoe covers, a change of clothes), and whether to keep or take things. Then deal with what's left: get rid of it (each way has its own chance of discovery), plant it on someone, leave it at a later scene, or send it. Money comes from your job, begging (if indigent), theft and robbery, and stolen cards and goods leave trails. Your background makes you drawn to certain people and places, and that can shift. A police officer killer sees inside the investigation and can steer it, at a risk. The journal tells each day in short or full form.</li>
   <li><b>The police in killer mode</b> now see where you've been (card payments, CCTV, staff), estimate where you live from the scenes, run blood screening drives, check shop records and bank-card use, and follow up what's found. To convict you they need at least one piece of hard evidence.</li>
+  <li><b>Two-player handicap</b> (new-case screen): a balance slider from "Big help to police" to "Big help to killer", with advanced settings for the police (detective skill, force size, forensic luck) and the killer (traces left, free hours, starting money).</li>
+  <li><b>Opponent skill</b> (new-case screen): set how good the computer opponent is. In killer mode that's the police (Rookie to Relentless; advanced: detective skill, tactics, force size, forensic luck). In police mode it's the killer (Sloppy to Mastermind; advanced: care, cunning, restraint, cover). Difficulty now sets only how fast public pressure rises.</li>
   <li><b>Two-player</b> (one computer): one person plays the killer, the other the police. Each day the killer player takes their turn first, then hands over; a blank screen between turns keeps each side's information private.</li>
   <li><b>Killer mode</b> (choose it when starting a new case): you play the killer and the computer runs the police. Spend each day's free time watching places and people, plan nights, choose your care level and whether to leave a signature or keep things. The urge rises daily; acts that fit your pattern settle it more. You only see what a resident would see: news, and signs that the police are close. Score = days free and quiet days, boosted by consistency and permanent risky choices. No points per victim.</li>
   <li><b>Timeline</b> shows everything that happened, oldest first, filtered by case or person. You can write notes on cases and people.</li>
@@ -2508,7 +2530,8 @@ function setupModal(first){
    <span style="font-size:12px">Presets: <button class="small" data-pp="100">Village 100</button> <button class="small" data-pp="500">Town 500</button> <button class="small" data-pp="2000">City 2,000</button> <button class="small" data-pp="10000">Large city 10,000</button></span><br>
    <span class="muted" id="sPopInfo" style="font-size:12px"></span></p>
   <p><b>Difficulty</b><br>${Object.entries(DIFF).map(([k,d])=>`<label style="margin-right:12px"><input type="radio" name="sDiff" value="${k}" ${c.diff===k?'checked':''}> ${d.label}</label>`).join('')}<br>
-   <span class="muted" style="font-size:12px">Changes how careful the killer is, how fast public pressure rises, and your detectives' skills.</span></p>
+   <span class="muted" style="font-size:12px">Sets how fast public pressure rises, and suggests an opponent skill below.</span></p>
+  <div id="oppBox" class="det" style="background:#f6efdc"></div>
   <p><label><input type="checkbox" id="sCareer" ${c.career?'checked':''}> <b>Career roster</b>: keep your detectives between cases; they gain skill and may retire.</label> <button class="small" id="sRoster">View roster</button></p>
   <p><b>Case seed</b> (optional, to replay a case) <input id="sSeed" placeholder="random" style="width:140px"></p>
   <button class="primary" id="sGo">Start case</button> ${first?'':'<button id="sNo">Cancel</button>'}`);
@@ -2516,10 +2539,29 @@ function setupModal(first){
     const nd=v<=300?1:v<=1000?2:v<=3000?4:6;
     $('sPopInfo').textContent=`${nd} district${nd>1?'s':''}, about ${Math.max(8,Math.min(300,Math.round(v/40)))} places, police force of ${n} detective${n>1?'s':''}${v<=1000?' (plus county forensics help)':''}.`};
   $('sPop').oninput=upd;upd();
+  UI.opp=UI.opp||(()=>{try{return JSON.parse(localStorage.getItem('gski_opp'))||oppDefault()}catch(e){return oppDefault()}})();
+  UI.hc=UI.hc||(()=>{try{return JSON.parse(localStorage.getItem('gski_hc'))||hcDefault()}catch(e){return hcDefault()}})();
+  const drawOpp=()=>{const mode=document.querySelector('[name=sMode]:checked').value;const box=$('oppBox');
+    if(mode==='two'){const h=UI.hc;
+      box.innerHTML=`<b>Handicap</b> <span style="font-family:'IBM Plex Mono'">${HC.names[h.bal]}</span><br>
+       <input type="range" id="hBal" min="0" max="4" step="1" value="${h.bal}" style="width:100%"><div style="display:flex;justify-content:space-between;font-size:11px" class="muted">${HC.names.map(n=>`<span>${n}</span>`).join('')}</div>
+       <details style="margin-top:6px"><summary style="cursor:pointer">Advanced</summary>${HC.adv.map(([sd,k,l,mn,mx,st,f])=>`<label style="display:block;font-size:12px;margin-top:4px">${l}: <b id="hv_${sd}_${k}">${f(h[sd][k])}</b><input type="range" data-hs="${sd}" data-hk="${k}" min="${mn}" max="${mx}" step="${st}" value="${h[sd][k]}" style="width:100%"></label>`).join('')}<span class="muted" style="font-size:11px">Moving the balance slider resets these.</span></details>`;
+      $('hBal').oninput=e=>{h.bal=+e.target.value;const pr=JSON.parse(JSON.stringify(HC.presets[h.bal]));h.police=pr.police;h.killer=pr.killer;drawOpp()};
+      box.querySelectorAll('[data-hs]').forEach(r=>r.oninput=()=>{const sd=r.dataset.hs,k=r.dataset.hk;h[sd][k]=+r.value;$(`hv_${sd}_${k}`).textContent=HC.adv.find(a=>a[0]===sd&&a[1]===k)[6](h[sd][k])});
+      return}
+    const side=mode==='killer'?'police':'killer',D=OPP[side],o=UI.opp[side];
+    box.innerHTML=`<b>Opponent skill: the computer ${side==='police'?'police':'killer'}</b> <span style="font-family:'IBM Plex Mono'">${D.names[o.lvl]}</span><br>
+     <input type="range" id="oLvl" min="0" max="4" step="1" value="${o.lvl}" style="width:100%"><div style="display:flex;justify-content:space-between;font-size:11px" class="muted">${D.names.map(n=>`<span>${n}</span>`).join('')}</div>
+     <details style="margin-top:6px"><summary style="cursor:pointer">Advanced</summary>${D.adv.map(([k,l,mn,mx,st,f])=>`<label style="display:block;font-size:12px;margin-top:4px">${l}: <b id="ov_${k}">${f(o[k])}</b><input type="range" data-ok="${k}" min="${mn}" max="${mx}" step="${st}" value="${o[k]}" style="width:100%"></label>`).join('')}<span class="muted" style="font-size:11px">Moving the main slider resets these.</span></details>`;
+    $('oLvl').oninput=e=>{o.lvl=+e.target.value;Object.assign(o,D.presets[o.lvl]);drawOpp()};
+    box.querySelectorAll('[data-ok]').forEach(r=>r.oninput=()=>{const k=r.dataset.ok;o[k]=+r.value;$('ov_'+k).textContent=D.adv.find(a=>a[0]===k)[5](o[k])});};
+  document.querySelectorAll('[name=sMode]').forEach(r=>r.onchange=drawOpp);
+  document.querySelectorAll('[name=sDiff]').forEach(r=>r.onchange=()=>{const s2=DIFF[r.value].sug;for(const side of ['police','killer']){UI.opp[side].lvl=s2;Object.assign(UI.opp[side],OPP[side].presets[s2])}drawOpp()});
+  drawOpp();
   document.querySelectorAll('[data-pp]').forEach(b=>b.onclick=()=>{$('sPop').value=b.dataset.pp;upd()});
-  $('sGo').onclick=()=>{const seed=parseInt($('sSeed').value)||0;startNew(seed,{pop:+$('sPop').value,diff:document.querySelector('[name=sDiff]:checked').value,mode:document.querySelector('[name=sMode]:checked').value,career:$('sCareer').checked})};
+  $('sGo').onclick=()=>{const seed=parseInt($('sSeed').value)||0;startNew(seed,{pop:+$('sPop').value,diff:document.querySelector('[name=sDiff]:checked').value,mode:document.querySelector('[name=sMode]:checked').value,career:$('sCareer').checked,opp:JSON.parse(JSON.stringify(UI.opp)),hc:JSON.parse(JSON.stringify(UI.hc))});try{localStorage.setItem('gski_opp',JSON.stringify(UI.opp));localStorage.setItem('gski_hc',JSON.stringify(UI.hc))}catch(e){}};
   $('sRoster').onclick=rosterModal;
-  $('sTut').onclick=()=>startNew(424242,{pop:1500,diff:'easy',mode:'police',career:false,tutorial:true});
+  $('sTut').onclick=()=>startNew(424242,{pop:1500,diff:'easy',mode:'police',career:false,tutorial:true,opp:{police:{lvl:1,...OPP.police.presets[1]},killer:{lvl:1,...OPP.killer.presets[1]}}});
   if($('sNo'))$('sNo').onclick=closeModal;
 }
 /* ---------- save / load ---------- */
