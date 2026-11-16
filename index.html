@@ -2565,7 +2565,34 @@ function setupModal(first){
   if($('sNo'))$('sNo').onclick=closeModal;
 }
 /* ---------- save / load ---------- */
-function snapshot(){return{v:2,ts:Date.now(),seed:S.seed,cfg:S.cfg,S,dead:P.filter(p=>!p.alive).map(p=>p.id),jailed:P.filter(p=>p.jailed).map(p=>p.id)}}
+const GAME_VER='V3';
+function plSig(){let h=0;for(const p of PL)for(const ch of p.name)h=(h*31+ch.charCodeAt(0))|0;return PL.length+':'+h}
+function parseSave(t){
+  if(typeof t!=='string')return t;
+  t=t.replace(/^\uFEFF/,'').trim();
+  if(!t)throw new Error('The file is empty.');
+  try{return JSON.parse(t)}catch(e){throw new Error("This doesn't look like a game save (the file couldn't be read as save data).")}
+}
+function safeRestore(raw){
+  const d=parseSave(raw);
+  if(!d||d.v!==2||!d.S)throw new Error("This doesn't look like a save from this game.");
+  if(d.ver&&d.ver!==GAME_VER)throw new Error(`This save was made in ${d.ver}. Open it with that version of the game (the index.html in !Releases\\${d.ver}).`);
+  const back=snapshot();
+  try{
+    restore(d);
+    if(d.plsig&&d.plsig!==plSig())throw new Error('mismatch');
+    if(!P[S.k.id]||S.cases.some(c=>!P[c.vid]))throw new Error('mismatch');
+    let n=0;for(const l of S.log){const re=/data-p="(\d+)">([^<]+)</g;let m;while((m=re.exec(l.html))&&n<200){n++;if(!P[+m[1]]||fullName(P[+m[1]])!==m[2])throw new Error('mismatch')}}
+  }catch(e){
+    try{restore(back)}catch(e2){}
+    throw new Error(d.ver?`This save couldn't be loaded (${e.message}).`:"This save seems to be from an older version of the game (V2, or V1). Open it with the index.html in !Releases\\V2.");
+  }
+}
+function snapshot(){
+  const ids=new Set([S.k.id,...(S.k.past||[])]);if(S.kp&&S.kp.confided!=null)ids.add(S.kp.confided);
+  const mods={};for(const id of ids)if(P[id])mods[id]=JSON.parse(JSON.stringify(P[id]));
+  const wl={};for(const p of P)if(p.wl!=null)wl[p.id]=p.wl;
+  return{v:2,ver:GAME_VER,plsig:plSig(),ts:Date.now(),seed:S.seed,cfg:S.cfg,S,dead:P.filter(p=>!p.alive).map(p=>p.id),jailed:P.filter(p=>p.jailed).map(p=>p.id),mods,wl}}
 function restore(d){
   if(!d||d.v!==2||!d.S)throw new Error('Not a V2 save');
   newGame(d.seed,d.cfg);
@@ -2573,8 +2600,11 @@ function restore(d){
   for(const p of P){p.alive=true;p.jailed=false}
   for(const id of d.dead)P[id].alive=false;
   for(const id of d.jailed)P[id].jailed=true;
+  for(const id in (d.mods||{}))if(P[id])Object.assign(P[id],d.mods[id]);
+  for(const id in (d.wl||{}))if(P[id])P[id].wl=d.wl[id];
   R=mulberry32((S.seed^Math.imul(S.day,2654435761)^Date.now())>>>0);
   UI.focus=null;UI.tab='cases';UI.turn=TWO()?'killer':null;initFilters();render();
+  if(TWO()&&typeof document!=='undefined')passScreen('Saved game loaded. Killer player: your turn. The police player looks away.');
 }
 function slotKey(i){return 'gski_v2_slot_'+i}
 function readSlot(i){try{const t=localStorage.getItem(slotKey(i));return t?JSON.parse(t):null}catch(e){return undefined}}
@@ -2589,14 +2619,14 @@ function saveModal(msg){
   <p class="muted" style="font-size:12px">Keep a case as a file, or move it to another computer. (Downloading works when the game is opened from your own folder. Inside Claude, use Copy instead.)</p>
   <button id="exFile">Download save file</button> <button id="exCopy">Copy save text</button>
   <h3 style="margin-top:12px">Load from a file or text</h3>
-  <input type="file" id="imFile" accept=".json,.txt"> <br><textarea id="imText" rows="3" style="width:100%;margin-top:6px" placeholder="…or paste save text here"></textarea>
+  <input type="file" id="imFile" accept=".json,.txt,application/json,text/plain"> <br><textarea id="imText" rows="3" style="width:100%;margin-top:6px" placeholder="…or paste save text here"></textarea>
   <button id="imGo">Load pasted text</button> <span id="imMsg" class="muted"></span>`);
   document.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{try{localStorage.setItem(slotKey(b.dataset.sv),JSON.stringify(snapshot()));saveModal(`Saved to slot ${b.dataset.sv}.`)}catch(e){saveModal('Could not save here: browser storage is full or blocked. Use a save file instead.')}});
-  document.querySelectorAll('[data-ld]').forEach(b=>b.onclick=()=>{try{restore(readSlot(b.dataset.ld));closeModal()}catch(e){saveModal('That save could not be loaded.')}});
+  document.querySelectorAll('[data-ld]').forEach(b=>b.onclick=()=>{try{safeRestore(readSlot(b.dataset.ld));closeModal()}catch(e){saveModal(e.message)}});
   $('exFile').onclick=()=>{try{const blob=new Blob([JSON.stringify(snapshot())],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`gski-case-${S.seed}-day${S.day}.json`;document.body.appendChild(a);a.click();a.remove();$('imMsg').textContent='Download started (if your browser allows it).'}catch(e){$('imMsg').textContent='Download not allowed here; use Copy.'}};
   $('exCopy').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(snapshot()));$('imMsg').textContent='Copied.'}catch(e){$('imText').value=JSON.stringify(snapshot());$('imMsg').textContent='Copy blocked; the save text is in the box above. Select it and copy.'}};
-  $('imFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{restore(JSON.parse(r.result));closeModal()}catch(err){$('imMsg').textContent='That file is not a valid save.'}};r.readAsText(f)};
-  $('imGo').onclick=()=>{try{restore(JSON.parse($('imText').value));closeModal()}catch(err){$('imMsg').textContent='That text is not a valid save.'}};
+  $('imFile').onchange=e=>{const f=e.target.files[0];if(!f)return;$('imMsg').textContent='Loading…';const r=new FileReader();r.onerror=()=>{$('imMsg').textContent="The file couldn't be read."};r.onload=()=>{try{safeRestore(String(r.result));closeModal()}catch(err){$('imMsg').innerHTML='<b style="color:var(--red)">'+err.message+'</b>'}e.target.value=''};r.readAsText(f)};
+  $('imGo').onclick=()=>{try{safeRestore($('imText').value);closeModal()}catch(err){$('imMsg').innerHTML='<b style="color:var(--red)">'+err.message+'</b>'}};
 }
 function boot(){
   const carSel=['<option value="">any</option>','<option value="none">no car</option>',...CARS.map(c=>`<option>${c[0]}</option>`)].join('');

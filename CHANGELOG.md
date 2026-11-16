@@ -21,6 +21,9 @@
 - Two-player handicap: a balance slider from "Big help to police" to "Big help to killer", with advanced settings for each side (police detective skill, force size and forensic luck; the killer's traces, free hours and starting money).
 - Difficulty now only sets how fast public pressure rises.
 
+**Fixes (16 November 2026)**
+- Loading saves: clearer messages (an unreadable file, or a save from another version, now says so and which version to open), saves from text editors with a byte-order mark load, a failed load keeps your current game, and loaded killer-mode games keep your killer's exact details.
+
 **Computer police**
 - They see where you've been (card payments, CCTV, staff memory), profile where you live from the scenes, run blood screening drives, and check shop records and bank-card use. Found items are followed up.
 - In killer mode, a conviction needs at least one piece of hard evidence.
